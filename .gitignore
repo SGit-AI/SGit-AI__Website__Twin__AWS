@@ -218,3 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# aws.twin.sgit.ai
+node_modules/
+browser-report.json
+twin-data/

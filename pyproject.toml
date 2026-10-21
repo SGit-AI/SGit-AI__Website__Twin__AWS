@@ -1,0 +1,16 @@
+[project]
+name            = "aws-twin"
+version         = "0.3.0"
+description     = "The AWS twin: AWS's wire protocols answered from a virtual file system, in CPython and in the browser (Pyodide)."
+requires-python = ">=3.10"
+license         = { text = "Apache-2.0" }
+dependencies    = []
+
+[project.optional-dependencies]
+test = ["boto3", "osbot-aws", "osbot-utils", "pytest"]
+
+[tool.setuptools]
+packages = ["aws_twin", "aws_twin.core", "aws_twin.s3", "aws_twin.sts", "aws_twin.vfs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

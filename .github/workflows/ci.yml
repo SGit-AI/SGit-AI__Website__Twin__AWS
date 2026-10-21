@@ -1,0 +1,61 @@
+# aws.twin.sgit.ai: one suite, two interpreters.
+#   python  : the Python twin's tests under pytest (CPython), and the browser bundle is up to date
+#   site    : the JavaScript proof of concept's tests, the generated pages are up to date, the site checks
+#   browser : the same Python tests in headless Chromium under Pyodide, with boto3 and OSBot-AWS from PyPI
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install boto3==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest
+      - run: python -m pytest -q
+      - run: python admin/build/py_bundle.py --check
+
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node admin/build/test.js
+      - name: generated pages are up to date
+        run: |
+          python admin/build/pages.py > /dev/null
+          python admin/build/articles.py
+          git diff --exit-code -- '*.html' articles/
+      - run: node admin/build/validate.js
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: REPORT=browser-report.json node admin/build/browser_tests.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-report
+          path: browser-report.json

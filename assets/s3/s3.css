@@ -1,0 +1,75 @@
+/* aws.twin.sgit.ai — the S3 browser. The console's information architecture (buckets,
+   breadcrumbs, objects table, object overview, upload) in this site's own colours. */
+.s3{--s3-ink:#16191f;--s3-line:#e9ebed;--s3-head:#232f3e;--s3-link:#0972d3;--s3-primary:#ec7211;--s3-primary-dk:#d45b07;--s3-muted:#5f6b7a;--s3-bg:#f2f3f3;
+  background:var(--s3-bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;color:var(--s3-ink);margin:0 auto;max-width:var(--wide)}
+.s3-top{display:flex;align-items:center;gap:1rem;background:var(--s3-head);color:#fff;padding:.55rem 1rem;font-size:.85rem;flex-wrap:wrap}
+.s3-top b{font-weight:700;letter-spacing:.01em}
+.s3-top .pill{border:1px solid rgba(255,255,255,.35);border-radius:99px;padding:.08rem .55rem;font-size:.72rem;color:#d1d5db}
+.s3-top .pill.ok{border-color:#3fb950;color:#7ee2a8}
+.s3-top .grow{flex:1}
+.s3-top select{font:inherit;font-size:.78rem;background:#2f3b4c;color:#fff;border:1px solid #495668;border-radius:6px;padding:.15rem .4rem}
+.s3-body{display:grid;grid-template-columns:200px 1fr;min-height:560px}
+@media (max-width:820px){.s3-body{grid-template-columns:1fr}}
+.s3-nav{background:#fff;border-right:1px solid var(--s3-line);padding:1rem .5rem}
+@media (max-width:820px){.s3-nav{border-right:0;border-bottom:1px solid var(--s3-line);display:flex;flex-wrap:wrap;gap:.2rem}}
+.s3-nav h4{margin:.2rem .6rem .5rem;font-size:1rem}
+.s3-nav a{display:block;padding:.3rem .6rem;color:var(--s3-ink);border-radius:6px;font-size:.88rem}
+.s3-nav a.here{font-weight:700;color:var(--s3-link)}
+.s3-nav a:hover{background:#f4f4f4;text-decoration:none}
+.s3-nav hr{border:0;border-top:1px solid var(--s3-line);margin:.6rem}
+.s3-main{padding:1rem 1.4rem 1.6rem;min-width:0}
+.s3-crumb{font-size:.82rem;color:var(--s3-muted);margin-bottom:.6rem}
+.s3-crumb a{color:var(--s3-link)}
+.s3-crumb .sep{margin:0 .35rem;color:#9ba7b6}
+.s3 h1{font-family:var(--sans);font-size:1.5rem;font-weight:700;margin:.2rem 0 .8rem;color:var(--s3-ink)}
+.s3-panel{background:#fff;border-radius:10px;box-shadow:0 1px 1px rgba(0,28,36,.3),1px 1px 1px rgba(0,28,36,.15),-1px 1px 1px rgba(0,28,36,.15);margin:0 0 1rem}
+.s3-panel-h{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.9rem 1.1rem .5rem}
+.s3-panel-h h2{font-family:var(--sans);font-size:1.15rem;font-weight:700;margin:0;flex:1;color:var(--s3-ink);text-align:left}
+.s3-panel-h h2 .count{color:var(--s3-muted);font-weight:400}
+.s3-panel-sub{padding:0 1.1rem .6rem;color:var(--s3-muted);font-size:.84rem}
+.s3-btn{font:inherit;font-size:.84rem;font-weight:700;border:2px solid #0972d3;color:#0972d3;background:#fff;border-radius:20px;padding:.25rem .95rem;cursor:pointer;white-space:nowrap}
+.s3-btn:hover{background:#f2f8fd}
+.s3-btn:disabled{border-color:#9ba7b6;color:#9ba7b6;cursor:default;background:#fff}
+.s3-btn.primary{background:var(--s3-primary);border-color:var(--s3-primary);color:#16191f}
+.s3-btn.primary:hover{background:var(--s3-primary-dk);border-color:var(--s3-primary-dk)}
+.s3-btn.danger{border-color:#d91515;color:#d91515}
+.s3-search{padding:0 1.1rem .7rem}
+.s3-search input{width:100%;max-width:520px;font:inherit;font-size:.86rem;padding:.35rem .7rem;border:2px solid #7d8998;border-radius:8px}
+.s3-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.s3-table th{text-align:left;font-weight:700;padding:.5rem .8rem;border-top:1px solid var(--s3-line);border-bottom:1px solid var(--s3-line);color:var(--s3-ink);background:#fff;font-size:.84rem;text-transform:none;letter-spacing:0}
+.s3-table td{padding:.5rem .8rem;border-bottom:1px solid var(--s3-line);vertical-align:middle}
+.s3-table tr.sel td{background:#f2f8fd}
+.s3-table td.cb,.s3-table th.cb{width:2rem}
+.s3-table a{color:var(--s3-link);font-weight:400}
+.s3-table .ico{display:inline-block;width:1.1rem;text-align:center;margin-right:.35rem;color:var(--s3-muted)}
+.s3-empty{text-align:center;padding:2rem 1rem;color:var(--s3-muted)}
+.s3-empty b{display:block;color:var(--s3-ink);margin-bottom:.3rem}
+.s3-tabs{display:flex;gap:1.4rem;border-bottom:1px solid var(--s3-line);margin:0 0 1rem;padding:0 .2rem}
+.s3-tabs a{padding:.5rem 0;color:var(--s3-ink);font-weight:700;font-size:.9rem;border-bottom:3px solid transparent}
+.s3-tabs a.here{color:var(--s3-link);border-bottom-color:var(--s3-link)}
+.s3-tabs a:hover{text-decoration:none;color:var(--s3-link)}
+.s3-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem 1.6rem;padding:.4rem 1.1rem 1.1rem}
+.s3-grid .k{color:var(--s3-muted);font-size:.82rem;font-weight:700;margin-bottom:.15rem}
+.s3-grid .v{font-size:.88rem;overflow-wrap:anywhere}
+.s3-form{padding:.4rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.9rem;max-width:640px}
+.s3-form label{display:flex;flex-direction:column;gap:.25rem;font-weight:700;font-size:.88rem}
+.s3-form label small{font-weight:400;color:var(--s3-muted)}
+.s3-form input,.s3-form select,.s3-form textarea{font:inherit;font-size:.88rem;padding:.4rem .6rem;border:2px solid #7d8998;border-radius:8px;font-weight:400}
+.s3-drop{border:2px dashed #7d8998;border-radius:10px;padding:1.6rem;text-align:center;color:var(--s3-muted);margin:.4rem 1.1rem 1rem}
+.s3-drop.over{border-color:var(--s3-link);background:#f2f8fd}
+.s3-flash{border-radius:10px;padding:.65rem 1rem;margin:0 0 1rem;font-size:.86rem;border:2px solid}
+.s3-flash.ok{background:#f2fcf3;border-color:#037f0c;color:#16191f}
+.s3-flash.err{background:#fff7f7;border-color:#d91515;color:#16191f}
+.s3-flash code{font-size:.8rem}
+.s3-preview{margin:0 1.1rem 1.1rem;max-height:420px;overflow:auto;background:#fafafa;border:1px solid var(--s3-line);border-radius:8px;padding:.7rem;font-family:var(--mono);font-size:.78rem;white-space:pre-wrap}
+.s3-preview img{max-width:100%;display:block}
+.s3-loading{padding:3rem 1rem;text-align:center;color:var(--s3-muted)}
+.s3-loading .steps{font-family:var(--mono);font-size:.78rem;margin-top:1rem;text-align:left;display:inline-block}
+/* the Python call log, under the console */
+.s3-py{background:var(--term-bg);color:#c9d1d9;font-family:var(--mono);font-size:.74rem;line-height:1.6;padding:.7rem 1rem;max-height:260px;overflow:auto}
+.s3-py .h{color:var(--term-dim);border-bottom:1px solid #30363d;margin-bottom:.3rem;padding-bottom:.25rem}
+.s3-py .py{color:#79c0ff}
+.s3-py .op{color:var(--term-yellow)}
+.s3-py .ok{color:var(--term-green)}
+.s3-py .er{color:var(--term-red)}
+.s3-py .d{color:var(--term-dim)}

@@ -7,7 +7,7 @@
 > defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
 > with localStorage as the vault.
 
-Site version: v0.2.0 (21 October 2026). Published by the sgit project, which builds the
+Site version: v0.3.0 (21 October 2026). Published by the sgit project, which builds the
 vault this twin stores into and the SG/Send server components its first job deploys. Not
 affiliated with Amazon Web Services; service names identify the interfaces mirrored. All
 content CC BY 4.0; the code is Apache-2.0.
@@ -81,11 +81,31 @@ results as commits. First job: deploy the SG/Send server components, one templat
 session per account, several regions, every deployment written in the vault. Rehearsed
 against the twin today on /twin/index.html#/deploy. /workflow/index.html
 
+## The Python twin (since v0.3.0)
+
+THE TWIN IS PYTHON NOW AND ANSWERS THE WIRE. aws_twin/ (standard library only) is a botocore
+hook plus S3's REST-XML protocol (21 named operations, bucket configurations and object
+tagging) and STS GetCallerIdentity, answered from a Python mirror of sg-vfs's provider
+contract (SGraph-AI__Tools). Routes per service: twin, live, replay; every request recorded;
+unimplemented services answer 501 NotImplemented by name. `with Twin():` in-process, or
+`python -m aws_twin --port 4566` with AWS_ENDPOINT_URL. The same 19 tests: pytest 18 pass, 1
+opt-in live; Pyodide in headless Chromium 16 pass, 3 skipped. OSBot-AWS 2.39.10 runs against
+it unchanged in both. /s3/ is an S3 browser whose every button calls OSBot-AWS in Pyodide,
+persisted to IndexedDB through vendored sg-vfs. /sessions/ checks a pasted IAM Identity
+Center session against AWS STS from the browser (measured with invented keys: the signed
+request reached AWS and the refusal was read). Measured CORS: the SSO portal refuses
+browsers (device-code login cannot finish in a page); cognito-identity, STS
+AssumeRoleWithWebIdentity and rolesanywhere allow them. Not built: those three methods,
+other services in Python, signature checks, object versions, a vault provider.
+
 ## The articles (/articles/, the newsroom's format, importable unchanged)
 
 Two kinds of author, marked in every byline: Dinis Cruz through an agent (a voice memo in
 his voice under his name) and aws-twin.build, the build agent, in its own voice. Index as
 data: /articles/articles.json. Markdown twin beside every article: /articles/<slug>.md.
+- /articles/the-twin-is-python-now.html (aws-twin.build, 2026-10-21): why the twin moved to
+  Python at the wire, what was built, the measurements, the sessions findings, what went
+  wrong first, what was not done.
 - /articles/first-go-at-the-aws-twin.html (aws-twin.build, 2026-10-21): what was built in
   the first session, the shape chosen, the tests, three things got wrong first, the commit.
 - /articles/boto3-in-the-browser.html (Dinis Cruz, 2026-10-21, a research brief): the AWS
@@ -97,7 +117,10 @@ data: /articles/articles.json. Markdown twin beside every article: /articles/<sl
 ## Page map
 
 /                      the front page: in short, the flow, the build state, why a twin
-/twin/                 the twin: the application (backend drop-down: vault, memory, live)
+/s3/                   the S3 browser: Python (OSBot-AWS, boto3) behind every button, the Python twin answering
+/sessions/             AWS sessions: IAM Identity Center setup, paste, live check, better methods measured
+/python/               the Python twin; /python/tests.html runs its tests in the browser
+/twin/                 the JavaScript proof of concept (backend drop-down: vault, memory, live)
 /design/               interface, state document, vault backend, live backend, diff, graph, templates, tests
 /workflow/             the session, the work per service, the first job, Monday vs Friday, cautions, PKI
 /naming/               the decision, the convention, the paragraph proposed for the hub, the name-watch

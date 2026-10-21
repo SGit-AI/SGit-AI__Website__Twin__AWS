@@ -351,3 +351,22 @@ figure.shot figcaption{font-size:.8rem;color:var(--dim);line-height:1.55;margin:
 main.doc.article h2{margin-top:2.4rem}
 main.doc.article li{margin:.45rem 0}
 .card.acard h3{font-size:1rem;line-height:1.35}
+
+/* ---------- python pages ---------- */
+.tw-run{font:inherit;font-size:.9rem;padding:.45rem 1rem;border:1px solid var(--accent);border-radius:8px;background:var(--accent-dk);color:#fff;cursor:pointer;font-weight:600}
+.tw-run:disabled{opacity:.6;cursor:default}
+main.doc td.ok{color:var(--accent-dk);font-weight:700}
+main.doc td.todo{color:var(--red);font-weight:700}
+
+/* ---------- sessions page ---------- */
+.sess{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow);margin:1rem 0}
+.sess form{display:flex;flex-direction:column;gap:.7rem}
+.sess label{display:flex;flex-direction:column;gap:.25rem;font-size:.8rem;color:var(--dim);font-weight:600;flex:1 1 10rem}
+.sess label small{font-weight:400}
+.sess textarea,.sess input{font:inherit;font-size:.86rem;padding:.4rem .55rem;border:1px solid var(--line2);border-radius:8px;background:#fff;color:var(--fg)}
+.sess textarea{font-family:var(--mono);font-size:.78rem}
+.sess-row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end}
+.tw-run.alt{background:var(--panel);color:var(--accent-dk)}
+.sess-status{margin-top:.8rem;font-size:.86rem;padding:.55rem .8rem;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:#34363c;overflow-wrap:anywhere}
+.sess-status.ok{border-color:rgba(15,118,110,.4);background:rgba(15,118,110,.06)}
+.sess-status.bad{border-color:rgba(185,28,28,.4);background:rgba(185,28,28,.05)}

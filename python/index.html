@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Python twin · aws.twin.sgit.ai</title>
+<meta name="description" content="The AWS twin in Python: AWS wire protocols answered from a virtual file system, the same package in CI, as a local endpoint, and in the browser under Pyodide.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/python/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/python/index.html">
+<meta property="og:title" content="The Python twin · aws.twin.sgit.ai">
+<meta property="og:description" content="The AWS twin in Python: AWS wire protocols answered from a virtual file system, the same package in CI, as a local endpoint, and in the browser under Pyodide.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.3.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../sessions/index.html">AWS sessions</a>
+      <a class="sl" href="../python/index.html">The Python twin</a>
+      <a class="sl" href="../python/tests.html">Run the tests here</a>
+      <a class="sl" href="../twin/index.html">The JavaScript proof of concept</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/the-twin-is-python-now.html">The twin is Python now</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / python</div>
+  <h1>The Python twin</h1>
+  <p class="lead">The twin is now Python. It answers the HTTP requests boto3, OSBot-AWS or the AWS CLI send, signed as they would be for AWS, from a virtual file system instead of an account. The same package runs in CI under pytest, on a laptop as a local endpoint, and in this browser under Pyodide, where it is what the <a href="../s3/index.html">S3 browser</a> talks to.</p>
+
+  <h2 id="why">1. Why Python, and why the wire</h2>
+  <p>The first proof of concept was a JavaScript object with an SDK-shaped interface. That was the wrong layer for the twin, for three reasons that became clear once boto3 ran in the browser:</p>
+  <ul>
+    <li><b>The backend code is Python.</b> OSBot-AWS, OSBot-Utils and the earlier twin experiments are Python; a twin in the same language can be tested with the same tools and reused by the same projects.</li>
+    <li><b>The wire is the only interface every client shares.</b> A twin that answers S3's REST-XML protocol serves boto3, OSBot-AWS, the AWS CLI and the JavaScript SDK alike, unchanged. A twin that answers an SDK's shape serves one SDK.</li>
+    <li><b>The same code runs in CI and in the browser.</b> Pyodide runs CPython; the twin uses only the standard library; boto3, OSBot-Utils and OSBot-AWS install from PyPI in both places at the same pinned versions.</li>
+  </ul>
+
+  <h2 id="shape">2. What is in the package</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Module</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>aws_twin/core/Twin.py</code></td><td>The router and the botocore hook. <code>with Twin():</code> sends every botocore request to the twin; the service comes from the SigV4 credential scope; each service has a route: <b>twin</b>, <b>live</b> (sent on to AWS and recorded) or <b>replay</b></td></tr>
+      <tr><td><code>aws_twin/s3/S3__Twin.py</code></td><td>S3's REST-XML protocol over the VFS: buckets, objects, listing with delimiters and continuation, ranges, conditional writes, copy, delete-many, multipart, tagging, policy and CORS stored as sent</td></tr>
+      <tr><td><code>aws_twin/sts/STS__Twin.py</code></td><td>GetCallerIdentity, so code that asks who it is before acting gets an answer</td></tr>
+      <tr><td><code>aws_twin/vfs/</code></td><td>The storage: sg-vfs's provider contract from SGraph-AI__Tools, in Python. Memory (with a change journal) and disk providers</td></tr>
+      <tr><td><code>aws_twin/core/Twin__Traffic.py</code>, <code>Twin__Replay.py</code></td><td>Every request and answer recorded; a recording played back as a backend</td></tr>
+      <tr><td><code>aws_twin/core/Twin__Server.py</code></td><td>The twin as a real HTTP endpoint (CPython): <code>python -m aws_twin --port 4566</code></td></tr>
+      <tr><td><code>aws_twin/web/</code></td><td>The browser pages' Python sides: the S3 browser's API and the live session check</td></tr>
+    </tbody>
+  </table></div>
+  <p>Services the twin does not have answer <code>501 NotImplemented</code> with the operation named, so a gap shows in the traffic and never as a silent success.</p>
+
+  <h2 id="use">3. Use it</h2>
+  <pre class="shell"><span class="d"># in a test, in-process: no port, no server, no credentials</span>
+from aws_twin import Twin
+with Twin() as twin:
+    from osbot_aws.aws.s3.S3 import S3
+    S3().bucket_create('my-bucket', 'eu-west-2')
+    print(twin.traffic.summary())
+
+<span class="d"># as a local endpoint, for the AWS CLI or anything that reads AWS_ENDPOINT_URL</span>
+python -m aws_twin --port 4566 --root ./twin-data
+export AWS_ENDPOINT_URL=http://127.0.0.1:4566
+aws s3 mb s3://my-bucket
+
+<span class="d"># send STS on to the real account, keep S3 on the twin</span>
+with Twin(routes={'sts': 'live'}): ...</pre>
+  <p>The endpoint form is the one OSBot-Local-Stack uses for LocalStack: OSBot-AWS reads <code>AWS_ENDPOINT_URL</code>, so code written for LocalStack runs against the twin with no change.</p>
+
+  <h2 id="tests">4. One suite, two interpreters</h2>
+  <p>The tests are plain functions with plain asserts, so pytest runs them in CI and a 27-line runner runs them here. Measured on 21 October 2026:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Where</th><th>Interpreter</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>pytest, CPython</td><td>Python 3.13, boto3 1.43.116, OSBot-AWS 2.39.10, OSBot-Utils 3.75.0</td><td>18 passed</td></tr>
+      <tr><td>this browser, Pyodide 0.28.3</td><td>Python 3.13.2, the same three packages from PyPI</td><td>16 passed, 2 skipped (the local endpoint and the disk provider: no sockets or disk in a browser)</td></tr>
+    </tbody>
+  </table></div>
+  <p><a href="tests.html">Run them in this browser →</a> CI runs both: pytest on every push, and the same suite in headless Chromium.</p>
+
+  <h2 id="limits">5. What it does not do yet</h2>
+  <ul>
+    <li><b>Two services.</b> S3 and STS GetCallerIdentity. Lambda, EC2, IAM, CloudWatch Logs, Cost Explorer and CloudFormation are in the JavaScript proof of concept's manifest and are the next to move.</li>
+    <li><b>No signature check.</b> The twin reads the credential scope to route, and does not verify the signature. A twin that checks signatures against pasted keys would also prove the client signed correctly.</li>
+    <li><b>No object versions.</b> Versioning is stored and listed as one version per object.</li>
+    <li><b>Live from the browser is STS only, measured.</b> The live route works for any service that answers a browser; S3's service endpoint does not without a bucket CORS rule.</li>
+  </ul>
+  <div class="pagenav"><a href="../sessions/index.html">← AWS sessions</a><a href="tests.html">Run the tests →</a></div>
+</main>
+
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.3.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../s3/index.html">S3 browser</a>
+    <a href="../sessions/index.html">AWS sessions</a>
+    <a href="../python/index.html">The Python twin</a>
+    <a href="../twin/index.html">JavaScript proof of concept</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

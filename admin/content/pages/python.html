@@ -1,0 +1,65 @@
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / python</div>
+  <h1>The Python twin</h1>
+  <p class="lead">The twin is now Python. It answers the HTTP requests boto3, OSBot-AWS or the AWS CLI send, signed as they would be for AWS, from a virtual file system instead of an account. The same package runs in CI under pytest, on a laptop as a local endpoint, and in this browser under Pyodide, where it is what the <a href="../s3/index.html">S3 browser</a> talks to.</p>
+
+  <h2 id="why">1. Why Python, and why the wire</h2>
+  <p>The first proof of concept was a JavaScript object with an SDK-shaped interface. That was the wrong layer for the twin, for three reasons that became clear once boto3 ran in the browser:</p>
+  <ul>
+    <li><b>The backend code is Python.</b> OSBot-AWS, OSBot-Utils and the earlier twin experiments are Python; a twin in the same language can be tested with the same tools and reused by the same projects.</li>
+    <li><b>The wire is the only interface every client shares.</b> A twin that answers S3's REST-XML protocol serves boto3, OSBot-AWS, the AWS CLI and the JavaScript SDK alike, unchanged. A twin that answers an SDK's shape serves one SDK.</li>
+    <li><b>The same code runs in CI and in the browser.</b> Pyodide runs CPython; the twin uses only the standard library; boto3, OSBot-Utils and OSBot-AWS install from PyPI in both places at the same pinned versions.</li>
+  </ul>
+
+  <h2 id="shape">2. What is in the package</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Module</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>aws_twin/core/Twin.py</code></td><td>The router and the botocore hook. <code>with Twin():</code> sends every botocore request to the twin; the service comes from the SigV4 credential scope; each service has a route: <b>twin</b>, <b>live</b> (sent on to AWS and recorded) or <b>replay</b></td></tr>
+      <tr><td><code>aws_twin/s3/S3__Twin.py</code></td><td>S3's REST-XML protocol over the VFS: buckets, objects, listing with delimiters and continuation, ranges, conditional writes, copy, delete-many, multipart, tagging, policy and CORS stored as sent</td></tr>
+      <tr><td><code>aws_twin/sts/STS__Twin.py</code></td><td>GetCallerIdentity, so code that asks who it is before acting gets an answer</td></tr>
+      <tr><td><code>aws_twin/vfs/</code></td><td>The storage: sg-vfs's provider contract from SGraph-AI__Tools, in Python. Memory (with a change journal) and disk providers</td></tr>
+      <tr><td><code>aws_twin/core/Twin__Traffic.py</code>, <code>Twin__Replay.py</code></td><td>Every request and answer recorded; a recording played back as a backend</td></tr>
+      <tr><td><code>aws_twin/core/Twin__Server.py</code></td><td>The twin as a real HTTP endpoint (CPython): <code>python -m aws_twin --port 4566</code></td></tr>
+      <tr><td><code>aws_twin/web/</code></td><td>The browser pages' Python sides: the S3 browser's API and the live session check</td></tr>
+    </tbody>
+  </table></div>
+  <p>Services the twin does not have answer <code>501 NotImplemented</code> with the operation named, so a gap shows in the traffic and never as a silent success.</p>
+
+  <h2 id="use">3. Use it</h2>
+  <pre class="shell"><span class="d"># in a test, in-process: no port, no server, no credentials</span>
+from aws_twin import Twin
+with Twin() as twin:
+    from osbot_aws.aws.s3.S3 import S3
+    S3().bucket_create('my-bucket', 'eu-west-2')
+    print(twin.traffic.summary())
+
+<span class="d"># as a local endpoint, for the AWS CLI or anything that reads AWS_ENDPOINT_URL</span>
+python -m aws_twin --port 4566 --root ./twin-data
+export AWS_ENDPOINT_URL=http://127.0.0.1:4566
+aws s3 mb s3://my-bucket
+
+<span class="d"># send STS on to the real account, keep S3 on the twin</span>
+with Twin(routes={'sts': 'live'}): ...</pre>
+  <p>The endpoint form is the one OSBot-Local-Stack uses for LocalStack: OSBot-AWS reads <code>AWS_ENDPOINT_URL</code>, so code written for LocalStack runs against the twin with no change.</p>
+
+  <h2 id="tests">4. One suite, two interpreters</h2>
+  <p>The tests are plain functions with plain asserts, so pytest runs them in CI and a 27-line runner runs them here. Measured on 21 October 2026:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Where</th><th>Interpreter</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>pytest, CPython</td><td>Python 3.13, boto3 1.43.116, OSBot-AWS 2.39.10, OSBot-Utils 3.75.0</td><td>18 passed</td></tr>
+      <tr><td>this browser, Pyodide 0.28.3</td><td>Python 3.13.2, the same three packages from PyPI</td><td>16 passed, 2 skipped (the local endpoint and the disk provider: no sockets or disk in a browser)</td></tr>
+    </tbody>
+  </table></div>
+  <p><a href="tests.html">Run them in this browser →</a> CI runs both: pytest on every push, and the same suite in headless Chromium.</p>
+
+  <h2 id="limits">5. What it does not do yet</h2>
+  <ul>
+    <li><b>Two services.</b> S3 and STS GetCallerIdentity. Lambda, EC2, IAM, CloudWatch Logs, Cost Explorer and CloudFormation are in the JavaScript proof of concept's manifest and are the next to move.</li>
+    <li><b>No signature check.</b> The twin reads the credential scope to route, and does not verify the signature. A twin that checks signatures against pasted keys would also prove the client signed correctly.</li>
+    <li><b>No object versions.</b> Versioning is stored and listed as one version per object.</li>
+    <li><b>Live from the browser is STS only, measured.</b> The live route works for any service that answers a browser; S3's service endpoint does not without a bucket CORS rule.</li>
+  </ul>
+  <div class="pagenav"><a href="../sessions/index.html">← AWS sessions</a><a href="tests.html">Run the tests →</a></div>
+</main>

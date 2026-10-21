@@ -20,13 +20,17 @@
   <a class="brand" href="index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="admin/versions.html" title="Site release history">v0.2.0</a>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.3.0</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
-      <a class="nl" href="twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <a class="nl" href="s3/index.html">The twin<span class="caret">&#9662;</span></a>
       <div class="sub">
-      <a class="sl" href="twin/index.html">Open the twin</a>
+      <a class="sl" href="s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="sessions/index.html">AWS sessions</a>
+      <a class="sl" href="python/index.html">The Python twin</a>
+      <a class="sl" href="python/tests.html">Run the tests here</a>
+      <a class="sl" href="twin/index.html">The JavaScript proof of concept</a>
       <a class="sl" href="design/index.html">The design</a>
       <a class="sl" href="workflow/index.html">The workflow</a>
       </div>
@@ -51,6 +55,7 @@
       <a class="nl" href="articles/index.html">Articles<span class="caret">&#9662;</span></a>
       <div class="sub">
       <a class="sl" href="articles/index.html">All articles</a>
+      <a class="sl" href="articles/the-twin-is-python-now.html">The twin is Python now</a>
       <a class="sl" href="articles/boto3-in-the-browser.html">boto3 in the browser</a>
       <a class="sl" href="articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
       <a class="sl" href="about/team.html">The team</a>
@@ -75,7 +80,8 @@
   <h1>AWS from the vault,<br>twin first</h1>
   <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. The live backend has its slot and not yet its wire.</p>
   <div class="ctas">
-    <a class="cta1" href="twin/index.html">Open the twin →</a>
+    <a class="cta1" href="s3/index.html">Open the S3 browser →</a>
+    <a class="cta2" href="sessions/index.html">AWS sessions →</a>
     <a class="cta2" href="design/index.html">The design →</a>
     <a class="cta2" href="workflow/index.html">The workflow →</a>
   </div>
@@ -113,7 +119,11 @@
     <table>
       <thead><tr><th>Artefact</th><th class="safe">State</th><th>What it proves</th></tr></thead>
       <tbody>
-        <tr><td><b>The interface</b>: 8 AWS-shaped namespaces, 42 operations, one manifest</td><td><span class="st st-poc">PoC, working</span></td><td>Consuming code has one thing to be written against. The UI, the templates and the tests all are.</td></tr>
+        <tr><td><b>The Python twin</b>: S3's REST-XML protocol and STS GetCallerIdentity answered from a VFS, a botocore hook, a local endpoint, record and replay</td><td><span class="st st-poc">PoC, working</span></td><td>The same 18 tests under pytest in CPython (18 pass) and under Pyodide in the browser (16 pass, 2 skipped: no sockets or disk). <a href="python/index.html">The Python twin →</a></td></tr>
+        <tr><td><b>OSBot-AWS against the twin</b>, unchanged, in CPython and in the browser</td><td><span class="st st-poc">PoC, working</span></td><td>Its S3 helpers, from bucket_create to bucket_delete_all_files, and STS caller identity</td></tr>
+        <tr><td><b>The S3 browser</b>: every button a Python call, kept in IndexedDB through sg-vfs</td><td><span class="st st-poc">PoC, working</span></td><td>14 headless checks including a reload that restores the buckets. <a href="s3/index.html">Open it →</a></td></tr>
+        <tr><td><b>The session check</b>: a pasted session verified against AWS from the browser, through the twin's live route</td><td><span class="st st-poc">built</span></td><td>A signed STS call from Python in the browser reaches AWS and comes back. <a href="sessions/index.html">Sessions →</a></td></tr>
+        <tr><td><b>The JavaScript interface</b>: 8 AWS-shaped namespaces, 42 operations, one manifest</td><td><span class="st st-poc">first PoC, superseded for new work</span></td><td>Still runs <a href="twin/index.html">the twin page</a>. New services go into the Python twin.</td></tr>
         <tr><td><b>The vault backend</b> on localStorage, and the memory backend</td><td><span class="st st-poc">PoC, working</span></td><td>Same script, two backends, same answers: 214 assertions in <code>admin/build/test.js</code></td></tr>
         <tr><td><b>Snapshots as commits</b>, diff between any two</td><td><span class="st st-poc">PoC, working</span></td><td>Monday against Friday, resource by resource. Export and import of the vault document.</td></tr>
         <tr><td><b>The account graph</b></td><td><span class="st st-poc">PoC, working</span></td><td>Eight node kinds, six edge relations, from the state the interface returns</td></tr>
@@ -161,11 +171,14 @@
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="admin/versions.html">v0.2.0</a> · <a href="admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+    <p class="verline">site <a href="admin/versions.html">v0.3.0</a> · <a href="admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
   </div>
   <div>
     <h4>The twin</h4>
-    <a href="twin/index.html">Open the twin</a>
+    <a href="s3/index.html">S3 browser</a>
+    <a href="sessions/index.html">AWS sessions</a>
+    <a href="python/index.html">The Python twin</a>
+    <a href="twin/index.html">JavaScript proof of concept</a>
     <a href="design/index.html">The design</a>
     <a href="workflow/index.html">The workflow</a>
   </div>

@@ -1,0 +1,170 @@
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / sessions</div>
+  <h1>AWS sessions: a temporary key, pasted, checked, and gone in an hour</h1>
+  <p class="lead">The live side of the twin needs one thing from AWS: a session for one account and one role that expires on its own. IAM Identity Center gives exactly that, from one to twelve hours, one by default. This page is the setup, a paste box that checks the session against the real account from this browser, and what was measured on 21 October 2026 about better ways to get one.</p>
+
+  <h2 id="paste">1. Paste a session</h2>
+  <p>From the AWS access portal: pick the account, then the role, then <b>Access keys</b>, and copy any of the options it shows (the macOS and Linux lines, the Windows lines, PowerShell, or the credentials-file block). The page reads the three values out of whatever you paste.</p>
+  <div class="sess">
+    <form id="sess-form">
+      <label>Paste from the access portal<textarea name="paste" rows="6" spellcheck="false" placeholder="export AWS_ACCESS_KEY_ID=&quot;ASIA...&quot;&#10;export AWS_SECRET_ACCESS_KEY=&quot;...&quot;&#10;export AWS_SESSION_TOKEN=&quot;...&quot;"></textarea></label>
+      <div class="sess-row">
+        <label>Account id <small>12 digits; read from a [account_role] header if present</small><input name="accountId" inputmode="numeric" autocomplete="off"></label>
+        <label>Role <small>the permission set</small><input name="role" autocomplete="off"></label>
+        <label>Region<input name="region" value="eu-west-2"></label>
+        <label>Expires in (hours)<input name="hours" type="number" min="1" max="12" value="1"></label>
+      </div>
+      <div class="sess-row"><button class="tw-run" type="submit">Keep for this tab</button> <button class="tw-run alt" type="button" id="sess-verify" disabled>Check it against AWS</button> <button class="tw-run alt" type="button" id="sess-clear" disabled>Clear</button></div>
+    </form>
+    <div id="sess-status" class="sess-status">No session in this tab.</div>
+    <pre class="shell" id="sess-log" hidden></pre>
+  </div>
+  <div class="note"><b>Where it goes.</b> Into this tab's <code>sessionStorage</code> under <code>aws.twin/session</code>, with the expiry you set, and nowhere else. Closing the tab removes it. The page never shows the secret or the token back. <b>Check it against AWS</b> loads Python and sends one request, STS <code>GetCallerIdentity</code>, signed in this browser and sent from it, which needs no permission and which STS answers a browser. The request goes through the twin with its STS route set to live, so it is recorded like every other call. Nothing else leaves the page. A vault, rather than the tab, is where the session should live next; it is the same slot with a longer reach, and it is not built yet.</div>
+
+  <h2 id="setup">2. Set up IAM Identity Center for this</h2>
+  <p>Once per organisation, by someone with administrator access to the management account. The console steps, then the same in the CLI.</p>
+  <ol>
+    <li><b>Enable IAM Identity Center</b> in the region you want it in (it lives in one region). Use the organisation instance, so permission sets can be assigned across accounts.</li>
+    <li><b>Choose the identity source.</b> The built-in Identity Center directory is enough to start; an external IdP (Google Workspace, Entra ID, Okta) can replace it later without changing anything below.</li>
+    <li><b>Create your user</b> and require MFA for sign-in (Settings, Authentication).</li>
+    <li><b>Create two permission sets</b>, narrow on purpose, with a session duration of <b>1 hour</b>:
+      <ul>
+        <li><code>TwinReader</code>: the AWS managed <code>ViewOnlyAccess</code>, or the inline policy below, which is what the twin's inventory, logs and cost views need and nothing more.</li>
+        <li><code>TwinDeployer</code>: CloudFormation, Lambda and the <code>sg-send-*</code> buckets, plus <code>iam:PassRole</code> on the deployment roles only. Assign it only to the accounts you deploy into.</li>
+      </ul></li>
+    <li><b>Assign</b> your user (or a group) to each account with the permission sets it needs.</li>
+    <li><b>Note the access portal URL</b> (Settings, the AWS access portal URL, of the form <code>https://d-xxxxxxxxxx.awsapps.com/start</code>). That is where sessions come from.</li>
+  </ol>
+  <h3>The TwinReader inline policy</h3>
+  <pre class="shell">{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Sid": "Inventory",
+      "Effect": "Allow",
+      "Action": [ "s3:ListAllMyBuckets", "s3:GetBucketLocation", "s3:ListBucket", "s3:GetBucketVersioning",
+                  "s3:GetBucketPolicy", "lambda:List*", "lambda:GetFunction", "ec2:Describe*",
+                  "iam:List*", "iam:Get*", "logs:Describe*", "logs:FilterLogEvents",
+                  "cloudformation:List*", "cloudformation:Describe*", "ce:GetCostAndUsage",
+                  "sts:GetCallerIdentity" ],
+      "Resource": "*" }
+  ]
+}</pre>
+  <h3>The same, from the CLI</h3>
+  <pre class="shell"><span class="d"># the instance and the identity store (once)</span>
+INSTANCE=$(aws sso-admin list-instances --query 'Instances[0].InstanceArn' --output text)
+
+<span class="d"># a one-hour permission set with the policy above saved as twin-reader.json</span>
+PS=$(aws sso-admin create-permission-set --instance-arn $INSTANCE --name TwinReader \
+       --session-duration PT1H --query 'PermissionSet.PermissionSetArn' --output text)
+aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE \
+       --permission-set-arn $PS --inline-policy file://twin-reader.json
+
+<span class="d"># assign a user to one account with it</span>
+aws sso-admin create-account-assignment --instance-arn $INSTANCE --permission-set-arn $PS \
+       --target-type AWS_ACCOUNT --target-id 123456789012 \
+       --principal-type USER --principal-id &lt;user id from the identity store&gt;</pre>
+  <p>Then sign in to the portal, pick the account and <code>TwinReader</code>, choose <b>Access keys</b>, and paste above.</p>
+
+  <h2 id="better">3. Is there a better way than pasting? Measured</h2>
+  <p>Pasting is the first method because it works today and the site never holds anything but one short session. The better ways all need AWS to answer a browser, so on 21 October 2026 each endpoint was asked, with no credentials, whether it would: a CORS preflight from <code>https://aws.twin.sgit.ai</code>, and the response headers.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Method</th><th>What it needs from the browser</th><th>Measured</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><b>Paste from the access portal</b></td><td>STS for the check</td><td>STS answers any origin; a signed GetCallerIdentity from Python in the browser reached AWS and came back</td><td><span class="st st-poc">built</span></td></tr>
+      <tr><td><b>SSO device code in the browser</b>, what <code>aws sso login</code> does: register a client, start a device authorisation, approve in the portal, get a token, then role credentials</td><td>sso-oidc, then the portal API</td><td>sso-oidc's token endpoint allows a preflight; RegisterClient refuses the preflight but answers a plain-text request with <code>Access-Control-Allow-Origin: *</code>. The portal's credentials and accounts API refuses outright: <code>Origin not allowed</code></td><td><span class="st st-no">blocked at the last step</span></td></tr>
+      <tr><td><b>Cognito identity pool</b>: sign in with a user pool or an external IdP, then <code>GetId</code> and <code>GetCredentialsForIdentity</code> return credentials for an IAM role chosen per user</td><td>cognito-identity</td><td>Preflight allowed for <code>content-type, x-amz-target, x-amz-user-agent</code></td><td><span class="st st-design">designed, reachable</span></td></tr>
+      <tr><td><b>STS AssumeRoleWithWebIdentity</b>: an OIDC token from an IdP the account trusts (Google, GitHub, a Cognito user pool) exchanged for role credentials, unsigned</td><td>STS</td><td>Preflight allowed for <code>content-type</code></td><td><span class="st st-design">designed, reachable</span></td></tr>
+      <tr><td><b>IAM Roles Anywhere</b>: an X.509 certificate from your own CA exchanged for role credentials</td><td>rolesanywhere, a signature with the certificate's key</td><td>Preflight allowed for <code>authorization, content-type, x-amz-date, x-amz-x509</code></td><td><span class="st st-design">designed, reachable</span></td></tr>
+    </tbody>
+  </table></div>
+  <p><b>What that means.</b> The device-code flow, the one that would replace the paste with a button and the portal's own approval page, cannot finish in a browser: the portal API that turns a token into role credentials does not answer one. It can finish with one helper call, made by a small process on the user's machine or an SG/Compute node, which is the helper the article kept in reserve. The three methods that do reach the browser are the ones that give the granularity the twin wants:</p>
+  <ul>
+    <li><b>Cognito identity pools</b> map each signed-in user to a role by rules or by principal tags, so a permission set per person, per group or per task is configuration, not code. This is the natural second method.</li>
+    <li><b>AssumeRoleWithWebIdentity</b> is the same idea without Cognito, for an IdP the account already trusts. Short and direct; the role's trust policy carries the granularity.</li>
+    <li><b>Roles Anywhere</b> is the PKI path: a key made in the browser with WebCrypto, never exportable, a certificate from a CA you run, and a session from that. The endpoint answers a browser; signing the request with the X.509 scheme from WebCrypto is the part to build and test.</li>
+  </ul>
+  <p>The plan, in order: paste (built), then a Cognito identity pool with one role per permission set and a role per group, then Roles Anywhere as the experiment. Each is a different way of filling the same slot; the twin, its live route and everything built on them do not change.</p>
+
+  <h2 id="rules">4. The rules for sessions here</h2>
+  <ul>
+    <li><b>Temporary only.</b> The slot refuses a key without a session token: a long-lived IAM user key is exactly what this design declines to hold.</li>
+    <li><b>One hour by default</b>, twelve at most, as the portal allows.</li>
+    <li><b>Narrow roles.</b> A reading role and a deploying role, never more than the job.</li>
+    <li><b>Never in a file, a commit or a page.</b> The site's validator fails the build on anything shaped like a key.</li>
+    <li><b>The code that holds it is versioned.</b> This page is part of site <code>v0.3.0</code>; the version in the nav names the copy you trusted.</li>
+  </ul>
+  <div class="pagenav"><a href="../s3/index.html">← The S3 browser</a><a href="../python/index.html">The Python twin →</a></div>
+</main>
+<script src="../assets/twin/interface.js"></script>
+<script src="../assets/twin/vault.js"></script>
+<script src="../assets/py/twin-pyodide.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V = window.AwsTwinVault;
+  var mem = {}, store;
+  try { window.sessionStorage.setItem('aws.twin/probe', '1'); window.sessionStorage.removeItem('aws.twin/probe'); store = window.sessionStorage; }
+  catch (e) { store = { getItem: function (k) { return k in mem ? mem[k] : null; }, setItem: function (k, v) { mem[k] = String(v); }, removeItem: function (k) { delete mem[k]; } }; }
+  var slot = new V.SessionStore(store);
+  var form = document.getElementById('sess-form'), status = document.getElementById('sess-status'), log = document.getElementById('sess-log');
+  var verifyBtn = document.getElementById('sess-verify'), clearBtn = document.getElementById('sess-clear');
+  var py = null;
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  function show() {
+    var s = slot.status();
+    verifyBtn.disabled = !s.present || s.expired; clearBtn.disabled = !s.present;
+    if (!s.present) { status.className = 'sess-status'; status.textContent = 'No session in this tab.'; return; }
+    status.className = 'sess-status ' + (s.expired ? 'bad' : 'ok');
+    status.innerHTML = '<b>' + (s.expired ? 'Expired' : 'Session kept for this tab') + '</b> · account <code>' + esc(s.accountId) + '</code>' + (s.role ? ' · role <code>' + esc(s.role) + '</code>' : '') +
+      ' · key <code>' + esc(s.keyId.slice(0, 4) + '…' + s.keyId.slice(-4)) + '</code> · ' + (s.expired ? 'expired at ' : 'expires ') + esc(s.expiresAt.replace('T', ' ').slice(0, 16)) + ' UTC' + (s.expired ? '' : ' (' + Math.floor(s.secondsLeft / 60) + ' min left)');
+  }
+
+  form.paste.addEventListener('input', function () {
+    var p = V.SessionStore.parsePaste(form.paste.value);
+    if (p.accountId && !form.accountId.value) form.accountId.value = p.accountId;
+    if (p.role && !form.role.value) form.role.value = p.role;
+  });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var p = V.SessionStore.parsePaste(form.paste.value);
+    var hours = Math.min(12, Math.max(1, parseFloat(form.hours.value) || 1));
+    try {
+      slot.set({ accessKeyId: p.accessKeyId, secretAccessKey: p.secretAccessKey, sessionToken: p.sessionToken,
+                 accountId: (form.accountId.value || p.accountId || '').trim(), role: form.role.value || p.role, region: form.region.value || 'eu-west-2',
+                 expiresAt: new Date(Date.now() + hours * 3600000).toISOString() });
+      form.paste.value = '';
+      log.hidden = true;
+    } catch (err) { status.className = 'sess-status bad'; status.textContent = err.message; return; }
+    show();
+  });
+  clearBtn.addEventListener('click', function () { slot.clear(); log.hidden = true; show(); });
+  verifyBtn.addEventListener('click', function () {
+    var s = slot.get();
+    verifyBtn.disabled = true; log.hidden = false; log.textContent = 'loading Python (about 25 MB the first time)…\n';
+    (py ? Promise.resolve(py) : loadTwinPython({ onStep: function (n, ms) { log.textContent += 'loaded ' + n + ' in ' + ms + ' ms\n'; } }))
+      .then(function (p) {
+        py = p;
+        log.textContent += 'sending STS GetCallerIdentity, signed here, through the twin\'s live route…\n';
+        py.globals.set('session_json', JSON.stringify({ accessKeyId: s.accessKeyId, secretAccessKey: s.secretAccessKey, sessionToken: s.sessionToken, region: s.region }));
+        var out = JSON.parse(py.runPython('from aws_twin.web.Session__Check import check_session\ncheck_session(session_json)'));
+        py.globals.delete('session_json');
+        out.traffic.forEach(function (t) { log.textContent += t.target + ' ' + t.method + ' ' + t.url + ' → ' + t.status + (t.signed ? ' (SigV4)' : '') + ' in ' + Math.round(t.ms) + ' ms\n'; });
+        if (out.ok) {
+          log.textContent += 'AWS says: account ' + out.account + ', ' + out.arn + '\n';
+          status.className = 'sess-status ok';
+          status.innerHTML += '<br><b>Checked against AWS:</b> <code>' + esc(out.arn) + '</code>' + (out.account !== s.accountId ? ' <b>(not the account id you typed: ' + esc(s.accountId) + ')</b>' : '');
+        } else {
+          log.textContent += 'AWS says: ' + out.code + ': ' + out.message + '\n';
+          status.className = 'sess-status bad';
+          status.innerHTML += '<br><b>AWS refused it:</b> ' + esc(out.code) + ', ' + esc(out.message);
+        }
+        window.__sessionCheck = out;
+      })
+      .catch(function (e) { log.textContent += 'failed: ' + e.message + '\n'; window.__sessionCheck = { error: String(e) }; })
+      .then(function () { verifyBtn.disabled = false; });
+  });
+  setInterval(show, 30000);
+  show();
+}());
+</script>

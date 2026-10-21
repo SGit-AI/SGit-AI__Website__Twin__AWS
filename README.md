@@ -10,25 +10,54 @@ on [twins.sgit.ai](https://twins.sgit.ai). The design comes from the article
 [AWS from the vault](https://newsroom.sgit.ai/articles/aws-from-the-vault.html)
 (21 October 2026) and the naming decision of the same day.
 
-This repository holds the site and a proof of concept that runs in the browser with
-`localStorage` as the vault. **Nothing here calls AWS.** The live backend has its session
-slot and not its wire: it accepts a pasted session and refuses every call naming the SDK
-command it would have sent.
+Since v0.3.0 the twin is **Python** (`aws_twin/`): it answers AWS's wire protocols (S3
+REST-XML, STS GetCallerIdentity) from a virtual file system, so boto3, OSBot-AWS and the AWS
+CLI reach it unchanged. The same package and the same tests run under pytest in CI and
+under Pyodide in the browser, where it powers the S3 browser (`s3/`). A live route per
+service sends chosen calls on to the real account with a pasted session; the sessions page
+(`sessions/`) checks one against AWS STS from the browser. The first, JavaScript proof of
+concept is still at `twin/`.
+
+```sh
+pip install boto3 osbot-aws osbot-utils pytest
+python -m pytest                     # 18 pass; AWS_TWIN_LIVE_TESTS=1 adds one live STS call with invented keys
+python -m aws_twin --port 4566       # the twin as a local endpoint: export AWS_ENDPOINT_URL=http://127.0.0.1:4566
+```
+
+```python
+from aws_twin import Twin
+with Twin() as twin:                 # every botocore request now goes to the twin
+    from osbot_aws.aws.s3.S3 import S3
+    S3().bucket_create('my-bucket', 'eu-west-2')
+    print(twin.traffic.summary())
+```
 
 ## Layout
 
 ```
+aws_twin/                       the Python twin: core (router, botocore hook, traffic, replay, server), s3, sts, vfs, web
+tests/                          its tests: plain functions, run by pytest and by tests/browser_runner.py in Pyodide
+pyproject.toml                  the package; no runtime dependency
 index.html                      the front page
-twin/index.html                 the twin: the application page
+s3/index.html                   the S3 browser: Python behind every button
+sessions/index.html             AWS sessions: setup, paste, a live check, better methods measured
+python/index.html  tests.html   the Python twin, and its tests in the browser
+twin/index.html                 the JavaScript proof of concept
 design/ workflow/ naming/ shipped/   the reference pages
 assets/site.css  assets/nav.js  the family's shared stylesheet and nav
 assets/twin/interface.js        the interface: manifest, ops, StateBackend, MemoryBackend, LiveBackend, diff, graph
 assets/twin/vault.js            VaultBackend over a key/value store, with commits; SessionStore
 assets/twin/templates.js        the two deployment templates and the demo estate
-assets/twin/app.js  app.css     the UI
+assets/twin/app.js  app.css     the JavaScript proof of concept's UI
+assets/py/                      the Pyodide loader and aws_twin.zip, the bundle the browser unpacks
+assets/s3/                      the S3 browser's page code and styles
+assets/vendor/sg-vfs/v0.1.0/    sg-vfs from SGraph-AI__Tools, vendored unchanged
 articles/                       the articles (built), their data under data/, figures under images/
 admin/content/articles/*.md     the articles' sources, in the newsroom's format
+admin/build/pages.py            builds every hand-written page with one nav and footer (bodies in admin/content/pages/)
 admin/build/articles.py         builds articles/ from the sources; the gate for the writing rules
+admin/build/py_bundle.py        builds assets/py/aws_twin.zip; --check fails if it is stale
+admin/build/browser_tests.js    runs the Python tests in headless Chromium under Pyodide
 admin/build/test.js             the interface tests (node, no dependencies)
 admin/build/validate.js         links, nav, versions, name-watch, no credential-shaped strings
 admin/versions.html  llms.txt
@@ -40,9 +69,12 @@ admin/versions.html  llms.txt
 python3 -m http.server 8080          # any static server; file:// works for the twin page too
 # open http://localhost:8080/twin/index.html
 
+python3 admin/build/pages.py         # build the pages
 python3 admin/build/articles.py      # build articles/ from admin/content/articles/
+python3 admin/build/py_bundle.py     # rebuild the browser bundle after changing aws_twin/ or tests/
+node admin/build/browser_tests.js    # the Python tests in a browser (needs Playwright)
 node admin/build/test.js             # the same script against the memory and vault backends
-node admin/build/validate.js         # the site checks; the three are the release gate
+node admin/build/validate.js         # the site checks; CI runs all of these (.github/workflows/ci.yml)
 ```
 
 No build step to serve, no dependency, no third-party script on the site's pages. The
@@ -57,6 +89,7 @@ cdn.jsdelivr.net, boto3 from PyPI), which an article was written from.
 | `aws.twin/vault`   | localStorage   | the vault document: working state, commits, head           |
 | `aws.twin/session` | sessionStorage | a pasted session with its expiry, for the tab's lifetime   |
 | `aws.twin/ui`      | localStorage   | the chosen backend, account and region                     |
+| `aws-twin-s3`      | IndexedDB      | the S3 browser's buckets, as sg-vfs entries                |
 
 ## Licence
 

@@ -1,0 +1,32 @@
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / <a href="index.html">python</a> / tests</div>
+  <h1>The twin's tests, in this browser</h1>
+  <p class="lead">The same test files CI runs with pytest, run here under Pyodide by a 27-line runner. Same Python, same twin, same boto3 and OSBot-AWS versions; the only difference is the interpreter underneath. Press the button, or the page runs them on load when opened with <code>#run</code>.</p>
+  <p><button class="tw-run" id="run">Run the tests</button> <span id="status" class="dim small">not started</span></p>
+  <div class="tablewrap"><table id="results"><thead><tr><th>Test</th><th>Result</th><th>ms</th></tr></thead><tbody></tbody></table></div>
+  <pre class="shell" id="log"></pre>
+  <div class="note"><b>What loads.</b> Pyodide from cdn.jsdelivr.net, boto3, OSBot-Utils and OSBot-AWS wheels from PyPI, pinned to the versions CI uses, and this site's <code>assets/py/aws_twin.zip</code>. About 25 MB the first time; the browser caches it after.</div>
+</main>
+<script src="../assets/py/twin-pyodide.js"></script>
+<script>
+(function () {
+  var log = document.getElementById('log'), status = document.getElementById('status'), tbody = document.querySelector('#results tbody');
+  var say = function (m) { log.textContent += m + '\n'; };
+  function run() {
+    document.getElementById('run').disabled = true;
+    status.textContent = 'loading Python…';
+    loadTwinPython({ onStep: function (n, ms) { say('loaded ' + n + ' in ' + ms + ' ms'); } }).then(function (py) {
+      status.textContent = 'running…';
+      var t = performance.now();
+      var report = JSON.parse(py.runPython('import json\nfrom tests.browser_runner import run\njson.dumps(run())'));
+      report.ms = Math.round(performance.now() - t); report.timings = py.twinTimings;
+      report.versions = JSON.parse(py.runPython('import json, sys, boto3, botocore, osbot_aws, osbot_utils, aws_twin\nfrom importlib.metadata import version\njson.dumps({"python": sys.version.split()[0], "boto3": boto3.__version__, "botocore": botocore.__version__, "osbot_aws": version("osbot-aws"), "osbot_utils": version("osbot-utils"), "aws_twin": aws_twin.__version__})'));
+      tbody.innerHTML = report.results.map(function (r) { return '<tr><td><code>' + r.test + '</code></td><td class="' + (r.ok ? 'ok' : 'todo') + '">' + (r.ok ? 'passed' : 'failed: ' + r.error.replace(/</g, '&lt;')) + '</td><td>' + r.ms + '</td></tr>'; }).join('');
+      status.textContent = report.passed + ' passed, ' + report.skipped + ' skipped, ' + report.failed + ' failed, in ' + report.ms + ' ms (Python ' + report.versions.python + ', boto3 ' + report.versions.boto3 + ', OSBot-AWS ' + report.versions.osbot_aws + ')';
+      window.__twinTestReport = report;
+    }).catch(function (e) { status.textContent = 'failed to load: ' + e.message; window.__twinTestReport = { error: String(e && e.stack || e) }; say(String(e)); });
+  }
+  document.getElementById('run').addEventListener('click', run);
+  if (location.hash === '#run') run();
+}());
+</script>

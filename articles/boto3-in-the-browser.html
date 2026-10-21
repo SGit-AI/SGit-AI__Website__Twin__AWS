@@ -21,13 +21,17 @@
   <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="../admin/versions.html" title="Site release history">v0.2.0</a>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.3.0</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
-      <a class="nl" href="../twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
       <div class="sub">
-      <a class="sl" href="../twin/index.html">Open the twin</a>
+      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../sessions/index.html">AWS sessions</a>
+      <a class="sl" href="../python/index.html">The Python twin</a>
+      <a class="sl" href="../python/tests.html">Run the tests here</a>
+      <a class="sl" href="../twin/index.html">The JavaScript proof of concept</a>
       <a class="sl" href="../design/index.html">The design</a>
       <a class="sl" href="../workflow/index.html">The workflow</a>
       </div>
@@ -52,6 +56,7 @@
       <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
       <div class="sub">
       <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/the-twin-is-python-now.html">The twin is Python now</a>
       <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
       <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
       <a class="sl" href="../about/team.html">The team</a>
@@ -119,7 +124,7 @@ URLLib3Session.send = _send</pre>
 <p>If you have run boto3 under Pyodide against a real account, or trimmed botocore&#x27;s models to a subset, write to agent@riskmandate.ai.</p>
 <h2 id="sources">Where this comes from</h2>
 <p>A voice memo of mine on 21 October 2026, written up by aws-twin.build, this site&#x27;s build agent, in the same session that built the proof of concept; the editorial responsibility is mine. The memo&#x27;s order is kept: try the twin, the two kinds of article, the JavaScript SDK, boto3 under Pyodide and OSBot, the workflow. The experiments and their data are kept beside this article: <a href="data/boto3-twin.html">articles/data/boto3-twin.html</a>, the page that loads Pyodide and boto3 and runs the bridge (it loads from cdn.jsdelivr.net and PyPI, the one page on this site that loads anything from elsewhere); <a href="data/run-boto3.js">data/run-boto3.js</a>, the headless runner; <a href="data/boto3-result.json">data/boto3-result.json</a>, the measured run; <a href="data/cors-probe.js">data/cors-probe.js</a> and <a href="data/cors-result.json">data/cors-result.json</a>, the CORS measurement; <a href="data/count-sdk-releases.py">data/count-sdk-releases.py</a>, which counted the npm and PyPI facts from the registries&#x27; JSON read the same day. Quotations: the npm deprecation notice on <code>aws-sdk</code> 2.1693.0; AWS&#x27;s <a href="https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/cors.html">CORS page for the SDK for JavaScript v3</a>, read 21 October 2026; <a href="https://pyodide.org/en/stable/usage/api/python-api/http.html">Pyodide&#x27;s pyodide.http documentation</a>, read the same day. The OSBot-AWS commit count is quoted from <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">AWS from the vault</a> and was not recounted here.</p>
-<div class="pagenav"><a href="first-go-at-the-aws-twin.html">← A first go at the AWS twin: one interface, a vault in the browser, and a live backend with a slot and no wire</a><a href="index.html">All articles →</a></div>
+<div class="pagenav"><a href="first-go-at-the-aws-twin.html">← A first go at the AWS twin: one interface, a vault in the browser, and a live backend with a slot and no wire</a><a href="the-twin-is-python-now.html">The twin is Python now: one package that answers AWS&#x27;s wire in CI and in the browser, OSBot-AWS running against it unchanged, and an S3 browser whose every button is Python →</a></div>
 <p class="small dim" style="margin-top:2rem">This page as <a href="boto3-in-the-browser.md">markdown</a> · its source, <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/main/admin/content/articles/boto3-in-the-browser.md"><code>admin/content/articles/boto3-in-the-browser.md</code></a> · licence <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
 </main>
 
@@ -129,11 +134,14 @@ URLLib3Session.send = _send</pre>
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="../admin/versions.html">v0.2.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.3.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
   </div>
   <div>
     <h4>The twin</h4>
-    <a href="../twin/index.html">Open the twin</a>
+    <a href="../s3/index.html">S3 browser</a>
+    <a href="../sessions/index.html">AWS sessions</a>
+    <a href="../python/index.html">The Python twin</a>
+    <a href="../twin/index.html">JavaScript proof of concept</a>
     <a href="../design/index.html">The design</a>
     <a href="../workflow/index.html">The workflow</a>
   </div>
