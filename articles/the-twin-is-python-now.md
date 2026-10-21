@@ -117,6 +117,7 @@ So the login that would replace the paste with a button, the device code that `a
 - **A folder route without a trailing slash listed the folder, not its contents.** The S3 browser now ends every folder prefix with a slash, whichever way the address was written.
 - **Two of my browser "passes" were tests that returned early.** The local endpoint and the disk provider cannot run in a browser; they now raise a skip that says so, and the counts above are the honest ones.
 - **I expected five entries in the example bucket and it has four.** The test was wrong, not the browser.
+- **The build scripts were never committed.** The repository's Python `.gitignore` template ignores every `build/` folder, which silently covered `admin/build/`: the tests, the validator and the generators referred to by this site and by its first two articles were on my disk and not in the repository until this release. CI's first run caught it; the ignore rule now makes an exception, and the scripts are in.
 
 ## What I did not do {#notdone}
 

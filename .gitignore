@@ -223,3 +223,5 @@ __marimo__/
 node_modules/
 browser-report.json
 twin-data/
+# the template's build/ rule above must not hide this site's build scripts
+!/admin/build/
