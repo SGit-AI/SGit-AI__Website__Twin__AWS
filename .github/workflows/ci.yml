@@ -41,7 +41,8 @@ jobs:
         run: |
           python admin/build/pages.py > /dev/null
           python admin/build/articles.py
-          git diff --exit-code -- '*.html' articles/
+          python admin/build/gen_sitemap.py
+          git diff --exit-code -- '*.html' '*.md' articles/ sitemap.xml assets/version.js
       - run: node admin/build/validate.js
 
   browser:

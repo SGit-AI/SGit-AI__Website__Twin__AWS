@@ -7,7 +7,11 @@
 > defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
 > with localStorage as the vault.
 
-Site version: v0.3.0 (21 October 2026). Published by the sgit project, which builds the
+Site version: v0.3.1 (21 October 2026). Deployed to GitHub Pages from `dev` by
+.github/workflows/deploy-pages.yml; every release is tagged vX.Y.Z by CI. Every page has a .md
+twin beside it (swap .html for .md). Briefs, in full: /briefs/index.html. What exists:
+/REALITY.md. Where the briefs were wrong, and departures from sgit.ai's repository guidance:
+/BRIEF-CORRECTIONS.md. Published by the sgit project, which builds the
 vault this twin stores into and the SG/Send server components its first job deploys. Not
 affiliated with Amazon Web Services; service names identify the interfaces mirrored. All
 content CC BY 4.0; the code is Apache-2.0.

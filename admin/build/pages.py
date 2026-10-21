@@ -6,6 +6,8 @@ that. Page bodies too long to keep inline live in admin/content/pages/<name>.htm
 Run: python3 admin/build/pages.py   (then python3 admin/build/articles.py, which reads the
 nav from index.html)"""
 import os, sys
+sys.path.insert(0, os.path.dirname(__file__))
+from md_twin import to_markdown
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAGES = os.path.join(ROOT, 'admin', 'content', 'pages')
@@ -13,7 +15,8 @@ PAGES = os.path.join(ROOT, 'admin', 'content', 'pages')
 def body_of(name):
     with open(os.path.join(PAGES, name), encoding='utf-8') as f:
         return f.read()
-VER = 'v0.3.0'
+with open(os.path.join(ROOT, 'admin', 'build', 'version.txt')) as _f:
+    VER = _f.read().strip()                         # the one place the version lives; CI tags from it
 DATE = '2026-10-21'
 
 def nav(p):
@@ -67,6 +70,9 @@ def nav(p):
       <div class="sub">
       <a class="sl" href="{p}admin/index.html">Admin &amp; engineering</a>
       <a class="sl" href="{p}admin/versions.html">Release history</a>
+      <a class="sl" href="{p}briefs/index.html">The briefs</a>
+      <a class="sl" href="{p}REALITY.md">Reality: what exists</a>
+      <a class="sl" href="{p}BRIEF-CORRECTIONS.md">Corrections</a>
       <a class="sl" href="{p}admin/index.html#requests">Requests to other sites</a>
       <a class="sl" href="{p}llms.txt">llms.txt</a>
       </div>
@@ -112,6 +118,8 @@ def footer(p):
     <a href="{p}about/team.html">The team</a>
     <a href="{p}admin/index.html">Admin &amp; engineering</a>
     <a href="{p}admin/versions.html">Release history</a>
+    <a href="{p}briefs/index.html">The briefs</a>
+    <a href="{p}REALITY.md">Reality</a>
     <a href="{p}llms.txt">llms.txt</a>
   </div>
 </div></footer>'''
@@ -133,6 +141,7 @@ def page(path, title, desc, body, extra_head='', body_class=''):
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">
 <meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="{os.path.basename(path)[:-5]}.md" title="This page as markdown">
 <link rel="stylesheet" href="{p}assets/site.css">
 {extra_head}</head>
 <body{(' class=' + chr(34) + body_class + chr(34)) if body_class else ''}>
@@ -150,6 +159,8 @@ def page(path, title, desc, body, extra_head='', body_class=''):
     os.makedirs(os.path.dirname(full), exist_ok=True)
     with open(full, 'w', encoding='utf-8') as f:
         f.write(html)
+    with open(full[:-5] + '.md', 'w', encoding='utf-8') as f:     # the markdown twin, from the same body
+        f.write(to_markdown(body, title, canon, VER))
     print('wrote', path)
 
 # ---------------------------------------------------------------- index.html
@@ -577,7 +588,10 @@ page('admin/index.html',
 <span class="cy">assets/twin/app.js  app.css</span> the UI
 <span class="y">admin/build/test.js</span>        the interface tests (node)
 <span class="y">admin/build/validate.js</span>    links, nav, versions, name-watch (node)
-<span class="d">admin/versions.html  llms.txt  README.md</span></pre>
+<span class="y">admin/build/version.txt</span>    the version, the only place it is typed
+<span class="y">admin/build/release.py</span>     bump, build, check, commit, push, verify live
+<span class="y">.github/workflows/</span>         deploy-pages.yml (gate, tag, publish), ci.yml (tests, browser)
+<span class="d">briefs/  BRIEF-CORRECTIONS.md  REALITY.md  CNAME  sitemap.xml  robots.txt  llms.txt</span></pre>
 
   <h2 id="run">2. Run it</h2>
   <pre class="shell"><span class="d"># serve the tree; any static server does, and file:// works for the twin page too</span>
@@ -604,9 +618,14 @@ node admin/build/validate.js</pre>
   <h2 id="validate">4. The validator, and the name-watch</h2>
   <p><code>admin/build/validate.js</code> walks every HTML page and checks: a title, a description and a canonical link; every relative <code>href</code> and <code>src</code> resolves to a file in the tree; the nav block is identical on every page once the <code>../</code> prefix is removed; the version string on every page matches the latest row of <a href="versions.html">the release history</a>; and the name-watch, the hub's check, that no capitalised <i>&lt;Word&gt; Twin</i> appears outside the allow-list of terms ruled on at <a href="https://twins.sgit.ai/naming/index.html">twins.sgit.ai/naming</a>. This site's own usage is lower case, <i>the AWS twin</i>, so the allow-list is the hub's four terms and nothing else.</p>
 
-  <h2 id="release">5. Releases</h2>
-  <p>Semantic versions, one row per release in <a href="versions.html">the release history</a>, the version shown in the nav and footer of every page, and the twin's code released as part of the site so that the code that will one day hold a session is a fixed, versioned copy. {VER} is the first release, of {DATE}.</p>
-
+  <h2 id="release">5. Releases, tags and deployment</h2>
+  <p>The same pipeline as every <code>*.sgit.ai</code> site, copied from the twins hub, and the release discipline in <a href="https://sgit.ai/docs/guidance/repositories.html">sgit.ai's repository guidance</a>:</p>
+  <ul>
+    <li><b>One version, in one file.</b> <code>admin/build/version.txt</code>; every page's badge, <code>assets/version.js</code> and <code>llms.txt</code> are built from it, and the gate fails if any disagree or if <a href="versions.html">the release history</a> lacks its row.</li>
+    <li><b>Every push to <code>dev</code> is a release.</b> The commit subject reads <code>site vX.Y.Z: ...</code>; <code>.github/workflows/deploy-pages.yml</code> runs the gate, checks the subject and the file agree and that the bump is the next minor, tags the commit <code>vX.Y.Z</code>, and publishes the tree to GitHub Pages. A push to <code>main</code> deploys without tagging. A failed gate stops both.</li>
+    <li><b>A release is done when the live site serves it.</b> <code>python3 admin/build/release.py "what changed"</code> bumps the version, builds, runs every check, commits with the right subject, pushes to <code>dev</code>, and polls <code>https://aws.twin.sgit.ai/assets/version.js</code> until it shows the new version.</li>
+    <li><b>Where the work started.</b> <a href="../briefs/index.html">The briefs</a>, in full; <a href="../BRIEF-CORRECTIONS.md">the corrections</a>, including where this repository departs from the estate guidance; <a href="../REALITY.md">the reality file</a>, what exists.</li>
+  </ul>
   <h2 id="requests">6. Requests to other sites</h2>
   <p>The naming decision touched four sites. The work on the others is theirs; it is listed here so that it is not lost, and ticked here when it is seen done.</p>
   <div class="tablewrap"><table>
@@ -639,6 +658,27 @@ page('about/team.html',
   <div class="pagenav"><a href="../articles/index.html">← Articles</a><a href="../admin/index.html">Admin &amp; engineering →</a></div>
 </main>''')
 
+# ---------------------------------------------------------------- briefs/index.html
+page('briefs/index.html',
+  'The briefs · aws.twin.sgit.ai',
+  'The four briefs that commissioned aws.twin.sgit.ai, published in full and as written, with their status, and where the corrections to them live.',
+  f'''<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / briefs</div>
+  <h1>The briefs</h1>
+  <p class="lead">Every piece of work on this site started from a message of Dinis Cruz's. Each is published here in full and as written, including the voice memos as they were transcribed, and none is ever edited. Where one was wrong, transcribed differently from what was meant, or overtaken, the finding is in <a href="../BRIEF-CORRECTIONS.md">the corrections</a>; what exists is in <a href="../REALITY.md">the reality file</a>.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Brief</th><th>Date</th><th>What it asked</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><a href="2026-10-21__01__the-first-go.md">1. The first go</a></td><td>2026-10-21</td><td>The site and a proof of concept from the newsroom article and the naming decision; the naming document in full</td><td><span class="st st-built">built, v0.1.0</span></td></tr>
+      <tr><td><a href="2026-10-21__02__articles-and-the-research-brief.md">2. Try it, and write it up</a></td><td>2026-10-21</td><td>An article in the agent's name, a research brief in Dinis's: the JavaScript SDK's maturity, boto3 in the browser</td><td><span class="st st-built">built, v0.2.0</span></td></tr>
+      <tr><td><a href="2026-10-21__03__the-python-twin.md">3. The Python twin</a></td><td>2026-10-21</td><td>An S3 browser on Python, OSBot-AWS in the browser, the same tests in CI and the browser, the twin in Python, AWS sessions</td><td><span class="st st-built">built, v0.3.0</span> <span class="st st-design">Cognito measured, not built</span></td></tr>
+      <tr><td><a href="2026-10-21__04__deploy-and-the-guidance.md">4. Deploy, and the guidance</a></td><td>2026-10-21</td><td>Deploy on push to <code>dev</code>; follow sgit.ai's guidance for <code>*.sgit.ai</code> sites, including tagging</td><td><span class="st st-built">built, v0.3.1</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small dim">The briefs are markdown files, served as written. Content CC BY 4.0.</p>
+  <div class="pagenav"><a href="../admin/index.html">← Admin &amp; engineering</a><a href="../admin/versions.html">Release history →</a></div>
+</main>''')
+
 # ---------------------------------------------------------------- admin/versions.html
 page('admin/versions.html',
   'Release history · aws.twin.sgit.ai',
@@ -650,7 +690,8 @@ page('admin/versions.html',
   <div class="tablewrap"><table class="vers">
     <thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
     <tbody>
-      <tr><td class="vnum">{VER}</td><td>{DATE}</td><td>The twin moves to Python. <code>aws_twin</code>: S3's REST-XML protocol and STS GetCallerIdentity over a Python mirror of sg-vfs, a botocore hook with twin, live and replay routes, a local endpoint, traffic recording. One test suite, run by pytest in CI and by Pyodide in the browser. OSBot-AWS runs against it unchanged in both. <a href="../s3/index.html">The S3 browser</a>, every button a Python call, persisted through sg-vfs's IndexedDB provider (vendored). <a href="../sessions/index.html">AWS sessions</a>: setup, paste and a live check, and measured CORS for the better methods. The article <a href="../articles/the-twin-is-python-now.html">The twin is Python now</a>. CI on GitHub Actions.</td></tr>
+      <tr><td class="vnum">v0.3.1</td><td>{DATE}</td><td>Deployed, and tagged on every release. aws.twin.sgit.ai resolved to GitHub Pages and answered 404, because this repository had no deploy workflow; <code>deploy-pages.yml</code> is now the twins hub's own (validate, tag <code>vX.Y.Z</code> on every push to <code>dev</code>, publish), with this site's tests added to its gate. The version lives in <code>admin/build/version.txt</code>; <code>CNAME</code>, <code>assets/version.js</code>, a markdown twin for every page, <code>sitemap.xml</code> and <code>robots.txt</code> added; the four briefs published in full; <code>BRIEF-CORRECTIONS.md</code> and <code>REALITY.md</code> written; a release script that checks the live site. Also ships <code>308b2ae</code>, which committed the build scripts a <code>.gitignore</code> rule had hidden. Releases v0.1.0 to v0.3.0 were tagged by hand.</td></tr>
+      <tr><td class="vnum">v0.3.0</td><td>{DATE}</td><td>The twin moves to Python. <code>aws_twin</code>: S3's REST-XML protocol and STS GetCallerIdentity over a Python mirror of sg-vfs, a botocore hook with twin, live and replay routes, a local endpoint, traffic recording. One test suite, run by pytest in CI and by Pyodide in the browser. OSBot-AWS runs against it unchanged in both. <a href="../s3/index.html">The S3 browser</a>, every button a Python call, persisted through sg-vfs's IndexedDB provider (vendored). <a href="../sessions/index.html">AWS sessions</a>: setup, paste and a live check, and measured CORS for the better methods. The article <a href="../articles/the-twin-is-python-now.html">The twin is Python now</a>. CI on GitHub Actions.</td></tr>
       <tr><td class="vnum">v0.2.0</td><td>{DATE}</td><td>The articles section, in the newsroom's format: <a href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a> (the build agent, in its own voice) and <a href="../articles/boto3-in-the-browser.html">boto3 in the browser</a> (Dinis Cruz, from a voice memo: the JavaScript SDK's maturity, boto3 under Pyodide against the twin, and the CORS measurement). The experiments and their data under <code>articles/data/</code>. The team page. Build-state rows updated for what was measured.</td></tr>
       <tr><td class="vnum">v0.1.0</td><td>{DATE}</td><td>First release. The site: front page, design, workflow, naming, status, admin. The proof of concept: the interface (8 AWS-shaped namespaces, 42 operations, plus 3 twin-only), the vault backend on localStorage with commits and diff, the memory backend, the live backend's session slot, two deployment templates, the demo estate, the account graph, and the UI. 214 test assertions. Captured the naming decision of the same day: <code>aws.twin.sgit.ai</code>, repo <code>SGit-AI__Website__Twin__AWS</code>, hub <code>twins.sgit.ai</code>.</td></tr>
     </tbody>
@@ -682,3 +723,10 @@ page('sessions/index.html',
   'AWS sessions · aws.twin.sgit.ai',
   'Set up IAM Identity Center for one-hour sessions, paste one and check it against AWS from the browser, and the measured comparison of better ways: the SSO device code, Cognito identity pools, web identity and Roles Anywhere.',
   body_of('sessions.html'))
+
+
+# ---------------------------------------------------------------- assets/version.js
+# what the release script polls on the live site, and what a page can read at run time
+with open(os.path.join(ROOT, 'assets', 'version.js'), 'w', encoding='utf-8') as f:
+    f.write(f'window.SITE_VERSION = "{VER}";\n')
+print('wrote assets/version.js', VER)

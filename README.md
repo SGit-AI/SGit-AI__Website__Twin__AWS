@@ -59,8 +59,12 @@ admin/build/articles.py         builds articles/ from the sources; the gate for 
 admin/build/py_bundle.py        builds assets/py/aws_twin.zip; --check fails if it is stale
 admin/build/browser_tests.js    runs the Python tests in headless Chromium under Pyodide
 admin/build/test.js             the interface tests (node, no dependencies)
-admin/build/validate.js         links, nav, versions, name-watch, no credential-shaped strings
-admin/versions.html  llms.txt
+admin/build/validate.js         the gate: version, canonical host, links, nav, twins, orphans, licence, name-watch, leak tripwire
+admin/build/version.txt         the version, the only place it is typed
+admin/build/release.py          bump, build, check, commit, push, verify live
+admin/build/md_twin.py  gen_sitemap.py   the markdown twins and sitemap.xml
+briefs/  BRIEF-CORRECTIONS.md  REALITY.md   the briefs in full, the corrections, what exists
+admin/versions.html  llms.txt  CNAME  sitemap.xml  robots.txt
 ```
 
 ## Run
@@ -81,6 +85,22 @@ No build step to serve, no dependency, no third-party script on the site's pages
 twin's code is UMD and runs unchanged in Node and in the browser. The one page that loads
 from elsewhere is the experiment under `articles/data/boto3-twin.html` (Pyodide from
 cdn.jsdelivr.net, boto3 from PyPI), which an article was written from.
+
+## Release
+
+Every push to `dev` is a release, deployed to GitHub Pages and tagged by
+`.github/workflows/deploy-pages.yml` (copied from the twins hub): the gate runs, the commit
+subject must read `site vX.Y.Z: ...` and agree with `admin/build/version.txt`, the commit is
+tagged `vX.Y.Z`, and the tree is published to https://aws.twin.sgit.ai.
+
+1. Add the release's row to the history in `admin/build/pages.py` (one sentence: what changed and why).
+2. `python3 admin/build/release.py "what changed"`: bumps the minor in `version.txt`, builds, runs
+   every check, commits as `site vX.Y.Z: what changed`, pushes to `dev`, and polls
+   https://aws.twin.sgit.ai/assets/version.js until it serves the new version.
+
+The briefs this site was built from are in `briefs/`, in full; where they were wrong, and
+where this repository departs from [sgit.ai's repository guidance](https://sgit.ai/docs/guidance/repositories.html),
+is in `BRIEF-CORRECTIONS.md`; what exists is in `REALITY.md`.
 
 ## What the twin stores in the browser
 

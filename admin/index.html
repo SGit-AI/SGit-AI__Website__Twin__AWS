@@ -12,6 +12,7 @@
 <meta property="og:title" content="Admin & engineering — how this site is built, tested and released · aws.twin.sgit.ai">
 <meta property="og:description" content="The repository layout, how to run the AWS twin locally, the tests, the validator and name-watch, what is stored where, the release process, and the requests this site makes of other sites in the family.">
 <meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
 <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -20,7 +21,7 @@
   <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="../admin/versions.html" title="Site release history">v0.3.0</a>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.3.1</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
@@ -66,6 +67,9 @@
       <div class="sub">
       <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
       <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../briefs/index.html">The briefs</a>
+      <a class="sl" href="../REALITY.md">Reality: what exists</a>
+      <a class="sl" href="../BRIEF-CORRECTIONS.md">Corrections</a>
       <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
       <a class="sl" href="../llms.txt">llms.txt</a>
       </div>
@@ -91,7 +95,10 @@
 <span class="cy">assets/twin/app.js  app.css</span> the UI
 <span class="y">admin/build/test.js</span>        the interface tests (node)
 <span class="y">admin/build/validate.js</span>    links, nav, versions, name-watch (node)
-<span class="d">admin/versions.html  llms.txt  README.md</span></pre>
+<span class="y">admin/build/version.txt</span>    the version, the only place it is typed
+<span class="y">admin/build/release.py</span>     bump, build, check, commit, push, verify live
+<span class="y">.github/workflows/</span>         deploy-pages.yml (gate, tag, publish), ci.yml (tests, browser)
+<span class="d">briefs/  BRIEF-CORRECTIONS.md  REALITY.md  CNAME  sitemap.xml  robots.txt  llms.txt</span></pre>
 
   <h2 id="run">2. Run it</h2>
   <pre class="shell"><span class="d"># serve the tree; any static server does, and file:// works for the twin page too</span>
@@ -118,9 +125,14 @@ node admin/build/validate.js</pre>
   <h2 id="validate">4. The validator, and the name-watch</h2>
   <p><code>admin/build/validate.js</code> walks every HTML page and checks: a title, a description and a canonical link; every relative <code>href</code> and <code>src</code> resolves to a file in the tree; the nav block is identical on every page once the <code>../</code> prefix is removed; the version string on every page matches the latest row of <a href="versions.html">the release history</a>; and the name-watch, the hub's check, that no capitalised <i>&lt;Word&gt; Twin</i> appears outside the allow-list of terms ruled on at <a href="https://twins.sgit.ai/naming/index.html">twins.sgit.ai/naming</a>. This site's own usage is lower case, <i>the AWS twin</i>, so the allow-list is the hub's four terms and nothing else.</p>
 
-  <h2 id="release">5. Releases</h2>
-  <p>Semantic versions, one row per release in <a href="versions.html">the release history</a>, the version shown in the nav and footer of every page, and the twin's code released as part of the site so that the code that will one day hold a session is a fixed, versioned copy. v0.3.0 is the first release, of 2026-10-21.</p>
-
+  <h2 id="release">5. Releases, tags and deployment</h2>
+  <p>The same pipeline as every <code>*.sgit.ai</code> site, copied from the twins hub, and the release discipline in <a href="https://sgit.ai/docs/guidance/repositories.html">sgit.ai's repository guidance</a>:</p>
+  <ul>
+    <li><b>One version, in one file.</b> <code>admin/build/version.txt</code>; every page's badge, <code>assets/version.js</code> and <code>llms.txt</code> are built from it, and the gate fails if any disagree or if <a href="versions.html">the release history</a> lacks its row.</li>
+    <li><b>Every push to <code>dev</code> is a release.</b> The commit subject reads <code>site vX.Y.Z: ...</code>; <code>.github/workflows/deploy-pages.yml</code> runs the gate, checks the subject and the file agree and that the bump is the next minor, tags the commit <code>vX.Y.Z</code>, and publishes the tree to GitHub Pages. A push to <code>main</code> deploys without tagging. A failed gate stops both.</li>
+    <li><b>A release is done when the live site serves it.</b> <code>python3 admin/build/release.py "what changed"</code> bumps the version, builds, runs every check, commits with the right subject, pushes to <code>dev</code>, and polls <code>https://aws.twin.sgit.ai/assets/version.js</code> until it shows the new version.</li>
+    <li><b>Where the work started.</b> <a href="../briefs/index.html">The briefs</a>, in full; <a href="../BRIEF-CORRECTIONS.md">the corrections</a>, including where this repository departs from the estate guidance; <a href="../REALITY.md">the reality file</a>, what exists.</li>
+  </ul>
   <h2 id="requests">6. Requests to other sites</h2>
   <p>The naming decision touched four sites. The work on the others is theirs; it is listed here so that it is not lost, and ticked here when it is seen done.</p>
   <div class="tablewrap"><table>
@@ -143,7 +155,7 @@ node admin/build/validate.js</pre>
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="../admin/versions.html">v0.3.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.3.1</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
   </div>
   <div>
     <h4>The twin</h4>
@@ -172,6 +184,8 @@ node admin/build/validate.js</pre>
     <a href="../about/team.html">The team</a>
     <a href="../admin/index.html">Admin &amp; engineering</a>
     <a href="../admin/versions.html">Release history</a>
+    <a href="../briefs/index.html">The briefs</a>
+    <a href="../REALITY.md">Reality</a>
     <a href="../llms.txt">llms.txt</a>
   </div>
 </div></footer>

@@ -22,7 +22,7 @@ var ALLOW = ['Digital Twin', 'Agent Twin', 'Org Twin', 'Service Twin'];
 
 function walk(dir, out) {
   fs.readdirSync(dir).forEach(function (name) {
-    if (name === '.git' || name === 'node_modules' || name === '__pycache__') return;
+    if (name === '.git' || name === 'node_modules' || name === '__pycache__' || name === '.pytest_cache') return;
     var p = path.join(dir, name);
     if (fs.statSync(p).isDirectory()) walk(p, out);
     else out.push(p);
@@ -35,10 +35,27 @@ var files = walk(ROOT, []);
 var pages = files.filter(function (f) { return /\.html$/.test(f) && !/[\\/]articles[\\/]data[\\/]/.test(f) && !/[\\/]admin[\\/]content[\\/]/.test(f); });
 var rel = function (f) { return path.relative(ROOT, f); };
 
-/* 4. the latest version */
+/* 4. the version: admin/build/version.txt is the only place it is typed; the release history's newest row,
+      every nav badge, assets/version.js and llms.txt must agree with it, and each release appears once */
+var latest = fs.readFileSync(path.join(ROOT, 'admin/build/version.txt'), 'utf8').trim();
+if (!/^v\d+\.\d+\.\d+$/.test(latest)) fail('admin/build/version.txt', 'not a vX.Y.Z version: ' + latest);
 var versionsHtml = fs.readFileSync(path.join(ROOT, 'admin/versions.html'), 'utf8');
-var latest = (/<td class="vnum">(v[\d.]+)<\/td>/.exec(versionsHtml) || [])[1];
-if (!latest) fail('admin/versions.html', 'no version row found');
+var rows = (versionsHtml.match(/<td class="vnum">v[\d.]+<\/td>/g) || []).map(function (r) { return r.replace(/<[^>]+>/g, ''); });
+if (rows[0] !== latest) fail('admin/versions.html', 'the newest release row is ' + rows[0] + ', version.txt says ' + latest);
+rows.forEach(function (v, i) { if (rows.indexOf(v) !== i) fail('admin/versions.html', v + ' is listed more than once'); });
+var versionJs = fs.existsSync(path.join(ROOT, 'assets/version.js')) ? fs.readFileSync(path.join(ROOT, 'assets/version.js'), 'utf8') : '';
+if (versionJs.indexOf('"' + latest + '"') < 0) fail('assets/version.js', 'does not carry ' + latest + ' (run admin/build/pages.py)');
+if (fs.readFileSync(path.join(ROOT, 'llms.txt'), 'utf8').indexOf(latest) < 0) fail('llms.txt', 'does not mention ' + latest);
+
+/* the canonical host, from CNAME */
+var HOST = fs.existsSync(path.join(ROOT, 'CNAME')) ? fs.readFileSync(path.join(ROOT, 'CNAME'), 'utf8').trim() : '';
+if (!/^[a-z0-9.-]+$/.test(HOST)) fail('CNAME', 'does not carry a hostname: "' + HOST + '"');
+['robots.txt', 'sitemap.xml'].forEach(function (f) {
+  var p = path.join(ROOT, f);
+  if (!fs.existsSync(p)) fail(f, 'missing');
+  else if (fs.readFileSync(p, 'utf8').indexOf('https://' + HOST + '/') < 0) fail(f, 'does not point at https://' + HOST + '/');
+});
+var linkedTo = {};
 
 var navs = {};
 pages.forEach(function (f) {
@@ -49,7 +66,13 @@ pages.forEach(function (f) {
   /* 1. head */
   if (!/<title>[^<]+<\/title>/.test(html)) fail(name, 'no <title>');
   if (!/<meta name="description" content="[^"]+">/.test(html)) fail(name, 'no description');
-  if (!/<link rel="canonical" href="https:\/\/aws\.twin\.sgit\.ai\/[^"]+">/.test(html)) fail(name, 'no canonical link');
+  var canon = (/<link rel="canonical" href="([^"]+)">/.exec(html) || [])[1];
+  if (!canon) fail(name, 'no canonical link');
+  else if (canon !== 'https://' + HOST + '/' + name.replace(/\\/g, '/')) fail(name, 'canonical ' + canon + ' is not https://' + HOST + '/' + name);
+  (html.match(/<meta property="og:url" content="([^"]+)">/g) || []).forEach(function (m) { if (m.indexOf('https://' + HOST + '/') < 0) fail(name, 'og:url not on ' + HOST); });
+
+  /* the markdown twin */
+  if (!fs.existsSync(f.replace(/\.html$/, '.md'))) fail(name, 'no markdown twin (' + name.replace(/\.html$/, '.md') + ')');
 
   /* 2. links */
   var re = /\b(?:href|src)="([^"#]+)(?:#[^"]*)?"/g, m;
@@ -58,6 +81,7 @@ pages.forEach(function (f) {
     if (/^(https?:|mailto:|javascript:|data:)/.test(target)) continue;
     var resolved = path.resolve(dir, target);
     if (!fs.existsSync(resolved)) fail(name, 'broken link ' + target);
+    else if (resolved !== f) linkedTo[path.relative(ROOT, resolved)] = true;
   }
 
   /* 3. nav */
@@ -87,6 +111,15 @@ pages.forEach(function (f) {
   }
 });
 
+/* orphans: a page nothing links to was published and is unfindable */
+pages.forEach(function (f) { var n = rel(f); if (n !== 'index.html' && !linkedTo[n]) fail(n, 'orphan: no page links to it'); });
+
+/* licence stamp on every markdown file this site authors (vendored code keeps its own) */
+files.filter(function (f) { return /\.md$/.test(f) && !/[\\/]assets[\\/]vendor[\\/]/.test(f); }).forEach(function (f) {
+  var t = fs.readFileSync(f, 'utf8');
+  if (!/CC BY 4\.0|creativecommons\.org\/licenses\/by\/4\.0/.test(t)) fail(rel(f), 'no CC BY 4.0 licence stamp');
+});
+
 /* 3. nav identical */
 var navKeys = Object.keys(navs);
 if (navKeys.length > 1) {
@@ -100,6 +133,7 @@ files.forEach(function (f) {
   var s = fs.readFileSync(f, 'utf8');
   var name = rel(f);
   /* a real key id is AKIA/ASIA + 16 upper-case alphanumerics; the docs' "ASIA..." placeholders are shorter */
+  if (/[A-Za-z0-9_-]{20,}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(s)) fail(name, 'looks like an sgit vault key');
   var k = /\b(AKIA|ASIA)[A-Z0-9]{16}\b/.exec(s);
   if (k) fail(name, 'looks like an AWS access key id: ' + k[0]);
   var sec = /aws_secret_access_key\s*=\s*[A-Za-z0-9/+]{40}\b/i.exec(s);
@@ -116,4 +150,4 @@ if (problems.length) {
   problems.forEach(function (p) { console.error('  ' + p); });
   process.exit(1);
 }
-console.log('aws.twin validate: ' + pages.length + ' pages, nav identical, version ' + latest + ', links resolve, name-watch clean, no credential-shaped strings in ' + files.length + ' files');
+console.log('aws.twin validate: ' + latest + ' on ' + HOST + ', ' + pages.length + ' pages with twins, nav identical, links resolve, no orphans, licence stamped, name-watch clean, no credential-shaped strings in ' + files.length + ' files');

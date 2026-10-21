@@ -273,7 +273,13 @@ def build():
 <div class="cards" style="padding:0;margin:1.4rem 0">{cards}</div>
 </main>'''
     with open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8') as f:
-        f.write(page('Articles · aws.twin.sgit.ai', 'The articles on aws.twin.sgit.ai: what was asked and what was built, in two voices, in the newsroom\'s format.', 'articles/index.html', index_main, nav, foot, twin=False))
+        f.write(page('Articles · aws.twin.sgit.ai', 'The articles on aws.twin.sgit.ai: what was asked and what was built, in two voices, in the newsroom\'s format.', 'articles/index.html', index_main, nav, foot))
+    with open(os.path.join(OUT, 'index.md'), 'w', encoding='utf-8') as f:          # the index's markdown twin
+        f.write(f'<!-- the markdown twin of {SITE}/articles/index.html; site {site_ver}; content CC BY 4.0 -->\n\n# Articles\n\n'
+                'Each article makes one argument about the AWS twin, in the newsroom\'s format. Two kinds of author: '
+                'Dinis Cruz through an agent, and aws-twin.build, the build agent, in its own voice.\n\n'
+                + ''.join(f"- [{a['fm']['title']}]({a['slug']}.md) · {a['fm']['author']} · {a['fm']['date']}\n" for a in articles)
+                + '\n*CC BY 4.0*\n')
     with open(os.path.join(OUT, 'articles.json'), 'w', encoding='utf-8') as f:
         json.dump([{'slug': a['slug'], 'url': f'{SITE}/articles/{a["slug"]}.html', 'markdown': f'{SITE}/articles/{a["slug"]}.md', **{k: a['fm'][k] for k in ('title', 'date', 'author', 'author_url', 'summary', 'version', 'tags', 'status')}} for a in articles], f, indent=2, ensure_ascii=False)
         f.write('\n')
