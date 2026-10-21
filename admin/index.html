@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin & engineering — how this site is built, tested and released · aws.twin.sgit.ai</title>
+<meta name="description" content="The repository layout, how to run the AWS twin locally, the tests, the validator and name-watch, what is stored where, the release process, and the requests this site makes of other sites in the family.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/admin/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/admin/index.html">
+<meta property="og:title" content="Admin & engineering — how this site is built, tested and released · aws.twin.sgit.ai">
+<meta property="og:description" content="The repository layout, how to run the AWS twin locally, the tests, the validator and name-watch, what is stored where, the release process, and the requests this site makes of other sites in the family.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../twin/index.html">Open the twin</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / admin</div>
+  <h1>Admin &amp; engineering</h1>
+  <p class="lead">A static site and a browser application in one repository, with no build step to serve and two scripts to check. Source at <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">SGit-AI/SGit-AI__Website__Twin__AWS</a>.</p>
+
+  <h2 id="layout">1. The repository</h2>
+  <pre class="shell"><span class="g">index.html</span>                 the front page
+<span class="g">twin/index.html</span>            the twin: the application page
+<span class="g">design/ workflow/ naming/ shipped/</span>   the reference pages
+<span class="g">assets/site.css  assets/nav.js</span>       the family's shared stylesheet and nav
+<span class="cy">assets/twin/interface.js</span>   the interface: manifest, ops, StateBackend, MemoryBackend, LiveBackend, diff, graph
+<span class="cy">assets/twin/vault.js</span>       VaultBackend over a key/value store, with commits; SessionStore
+<span class="cy">assets/twin/templates.js</span>   the two deployment templates and the demo estate
+<span class="cy">assets/twin/app.js  app.css</span> the UI
+<span class="y">admin/build/test.js</span>        the interface tests (node)
+<span class="y">admin/build/validate.js</span>    links, nav, versions, name-watch (node)
+<span class="d">admin/versions.html  llms.txt  README.md</span></pre>
+
+  <h2 id="run">2. Run it</h2>
+  <pre class="shell"><span class="d"># serve the tree; any static server does, and file:// works for the twin page too</span>
+python3 -m http.server 8080
+<span class="d"># then open http://localhost:8080/twin/index.html</span>
+
+<span class="d"># the interface tests: the same script against the memory and vault backends</span>
+node admin/build/test.js
+<span class="d"># the site checks: internal links resolve, nav identical on every page, one version string, name-watch</span>
+node admin/build/validate.js</pre>
+  <p>Both scripts exit non-zero on a failure and are the release gate. There is no dependency to install: the twin's code runs in Node and in the browser unchanged.</p>
+
+  <h2 id="storage">3. What the twin stores in the browser</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Key</th><th>Store</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>aws.twin/vault</code></td><td>localStorage</td><td>The vault document: working state, commits, head. Exportable as JSON from the snapshots page; reset from the same page.</td></tr>
+      <tr><td><code>aws.twin/session</code></td><td>sessionStorage</td><td>A pasted session, with its expiry, for the tab's lifetime. Cleared from the session page or by closing the tab.</td></tr>
+      <tr><td><code>aws.twin/ui</code></td><td>localStorage</td><td>The chosen backend, account and region.</td></tr>
+    </tbody>
+  </table></div>
+  <p>No cookies, no analytics, no request to any host: the twin page makes no network call after it loads.</p>
+
+  <h2 id="validate">4. The validator, and the name-watch</h2>
+  <p><code>admin/build/validate.js</code> walks every HTML page and checks: a title, a description and a canonical link; every relative <code>href</code> and <code>src</code> resolves to a file in the tree; the nav block is identical on every page once the <code>../</code> prefix is removed; the version string on every page matches the latest row of <a href="versions.html">the release history</a>; and the name-watch, the hub's check, that no capitalised <i>&lt;Word&gt; Twin</i> appears outside the allow-list of terms ruled on at <a href="https://twins.sgit.ai/naming/index.html">twins.sgit.ai/naming</a>. This site's own usage is lower case, <i>the AWS twin</i>, so the allow-list is the hub's four terms and nothing else.</p>
+
+  <h2 id="release">5. Releases</h2>
+  <p>Semantic versions, one row per release in <a href="versions.html">the release history</a>, the version shown in the nav and footer of every page, and the twin's code released as part of the site so that the code that will one day hold a session is a fixed, versioned copy. v0.1.0 is the first release, of 2026-10-21.</p>
+
+  <h2 id="requests">6. Requests to other sites</h2>
+  <p>The naming decision touched four sites. The work on the others is theirs; it is listed here so that it is not lost, and ticked here when it is seen done.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Site</th><th>Request</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>twins.sgit.ai</td><td>Add the paragraph <a href="../naming/index.html#ruling">proposed on the naming page</a> to the ruling: a twin's interface never holds credentials; a twin can have a live backend; the credential belongs to the backend. Keep the execution broker distinct.</td><td class="todo">open</td></tr>
+      <tr><td>twins.sgit.ai</td><td>Become definition and hub: a "The twins" page or section cataloguing S3 (sg-compute ships it, working), AWS (<code>aws.twin.sgit.ai</code>, PoC), and the designed twins, each with its build state. Decide whether the S3 container gets <code>s3.twin.sgit.ai</code>. Update the front page's build-state table when the wire ships.</td><td class="todo">open</td></tr>
+      <tr><td>twins.sgit.ai</td><td>Name-watch: no new term needed while this site writes <i>the AWS twin</i> in lower case; if a capitalised form is wanted, add it to the allow-list in <code>admin/build/validate.js</code> with its meaning.</td><td class="todo">open</td></tr>
+      <tr><td>providers.sgit.ai</td><td>Fix the family to the singular convention: <code>elevenlabs.provider.sgit.ai</code>, <code>openrouter.provider.sgit.ai</code>, and the UnGovr repository description; point <code>*.provider.sgit.ai</code> and keep the plural hosts as redirects; switch the canonical hosts before <code>bin/sync-providers.py</code> locks in the plural form.</td><td class="todo">open</td></tr>
+      <tr><td>newsroom.sgit.ai</td><td>In the article of 2026-10-21: replace <code>aws.sgit.ai</code> with <code>aws.twin.sgit.ai</code> in the title, abstract, body and Mermaid source; update "its name is not decided"; add the twin-first framing; link to twins.sgit.ai and the updated ruling.</td><td class="todo">open</td></tr>
+      <tr><td>sgit.ai</td><td>Before any <code>aws.provider.sgit.ai</code> report, check the providers hub's "no commercial relationship" disclosure against <code>/partnerships/aws.html</code>.</td><td class="todo">open</td></tr>
+    </tbody>
+  </table></div>
+  <div class="pagenav"><a href="../shipped/index.html">← Built, and designed</a><a href="versions.html">Release history →</a></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../twin/index.html">Open the twin</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

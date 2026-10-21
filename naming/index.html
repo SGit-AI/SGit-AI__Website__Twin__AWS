@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Naming — why aws.twin.sgit.ai, and the hub-and-family convention · aws.twin.sgit.ai</title>
+<meta name="description" content="The naming decision for the AWS site: aws.twin.sgit.ai, repo SGit-AI__Website__Twin__AWS, hub twins.sgit.ai. Why a twin and not a console, the options rejected, the plural-hub singular-instance convention, and the paragraph proposed for the ruling on twins.sgit.ai.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/naming/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/naming/index.html">
+<meta property="og:title" content="Naming — why aws.twin.sgit.ai, and the hub-and-family convention · aws.twin.sgit.ai">
+<meta property="og:description" content="The naming decision for the AWS site: aws.twin.sgit.ai, repo SGit-AI__Website__Twin__AWS, hub twins.sgit.ai. Why a twin and not a console, the options rejected, the plural-hub singular-instance convention, and the paragraph proposed for the ruling on twins.sgit.ai.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../twin/index.html">Open the twin</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / naming</div>
+  <h1>Why <code>aws.twin</code></h1>
+  <p class="lead">The article proposed <code>aws.sgit.ai</code> "or something wider", and said the name was not decided. It was decided on 2026-10-21, and the decision is the design: the site is a twin first, so it is named as one.</p>
+
+  <h2 id="decision">1. The decision</h2>
+  <div class="tablewrap"><table>
+    <tbody>
+      <tr><th>Domain</th><td><code>aws.twin.sgit.ai</code></td></tr>
+      <tr><th>Repository</th><td><code>SGit-AI__Website__Twin__AWS</code>, following <code>SGit-AI__Website__Hook__Tokens</code></td></tr>
+      <tr><th>Hub</th><td><a href="https://twins.sgit.ai">twins.sgit.ai</a>, which defines the primitive and will catalogue the twins in place</td></tr>
+    </tbody>
+  </table></div>
+  <p>The site is designed twin-first, in three steps. Build the twin: an AWS-shaped interface whose backend is a vault. Put the real connection in front of it as a second backend behind the same interface: a temporary IAM Identity Center session pasted into the user's vault. Then everything built against the twin works against the live account, because consuming code is written against the interface, not the backend. That is the pattern of the one working twin today, the S3-compatible vault container, where boto3 cannot tell the difference and the backend is swappable between real S3, a vault and memory. <code>aws.twin</code> is the second instance of that pattern, not an exception to it.</p>
+
+  <h3>Options considered, and rejected</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Option</th><th>Why not</th></tr></thead>
+    <tbody>
+      <tr><td><code>aws.sgit.ai</code></td><td>Loses the twin-first framing, which is the core of the design. A console with a credential bar is what the name suggests, and it is what the design refuses to be.</td></tr>
+      <tr><td><code>aws.platform.sgit.ai</code></td><td>"Platform" names nothing in the estate; a namespace with one occupant.</td></tr>
+      <tr><td><code>aws.provider.sgit.ai</code></td><td>Provider sites are reports, not tools: where the key lives, what it cost on a named workload, what broke. An AWS report may come later, separately (see below).</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="convention">2. The convention, by design</h2>
+  <ul>
+    <li><b>Plural is the hub, the family:</b> <code>twins.sgit.ai</code>, <code>hooks.sgit.ai</code>, <code>providers.sgit.ai</code>.</li>
+    <li><b>Singular is one instance, at that moment in time:</b> <code>aws.twin.sgit.ai</code>, <code>tokens.hook.sgit.ai</code>, <code>elevenlabs.provider.sgit.ai</code>.</li>
+    <li><b>Repositories:</b> <code>SGit-AI__Website__&lt;Family&gt;__&lt;Instance&gt;</code>, with the family name singular: <code>Hook__Tokens</code>, <code>Provider__ElevenLabs</code>, <code>Twin__AWS</code>.</li>
+  </ul>
+  <div class="note"><b>Ops note.</b> Each singular namespace needs its own wildcard certificate (<code>*.twin.sgit.ai</code>, <code>*.hook.sgit.ai</code>, <code>*.provider.sgit.ai</code>), because <code>*.sgit.ai</code> does not cover second-level subdomains.</div>
+
+  <h2 id="ruling">3. The ruling on the hub, and the paragraph this site proposes</h2>
+  <p><a href="https://twins.sgit.ai/naming/index.html">The naming ruling on twins.sgit.ai</a> says a corpus twin is the graph's endpoint into reality and holds no credentials, and that the S3 container blurs the line by also holding backend access. The AWS twin is a second case of the same blur, and it resolves it the same way the S3 container does in practice. This site proposes the following paragraph be added to the ruling:</p>
+  <blockquote class="challenge">A twin's interface never holds credentials. A twin can have a live backend; when it does, the credential belongs to that backend, not to the twin, and lives in the user's vault for the lifetime of the session (for AWS: a temporary IAM Identity Center session, 1–12 hours, 1 hour by default). The S3 container and the AWS twin are the two worked examples of this: interface first, backends swappable, live access as one backend among several.</blockquote>
+  <p>Two things stay distinct under that paragraph. The <b>execution broker</b> is a standing, credential-holding intermediary, and the hub's concentration-risk question about it stands. A twin with a live backend <b>borrows</b> a user-held, time-bounded session; it never stands, and it holds nothing when the session ends. The PoC makes the distinction mechanical: the session slot is a separate store from the twin's data, with an expiry, and the twin's interface has no method that returns it.</p>
+
+  <h2 id="watch">4. The name-watch on this site</h2>
+  <p>The hub fails its build on any capitalised <i>&lt;Word&gt; Twin</i> that has not been ruled on, and this site runs the same check in <code>admin/build/validate.js</code>, with the hub's four permitted terms as the allow-list. This site uses lower case throughout, <i>the AWS twin</i>, rather than adding a fifth term; if a capitalised form is ever wanted, it is added to the hub's table with its meaning first, and to this site's allow-list second.</p>
+
+  <h2 id="later">5. Later, and separate: an AWS provider report</h2>
+  <p>The providers family answers one question per provider: where the credential lives and what bounds it. For AWS the bound is a clock, and a report could also carry the CORS results per service and the cost of a named workload. That would be <code>aws.provider.sgit.ai</code>, a report, separate from this twin, a tool. Before adding it, the providers hub's "no commercial relationship" disclosure has to be checked against sgit.ai's partnerships page for AWS, because a report that is not independent must say so.</p>
+  <div class="pagenav"><a href="../workflow/index.html">← The workflow</a><a href="../shipped/index.html">Built, and designed →</a></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../twin/index.html">Open the twin</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

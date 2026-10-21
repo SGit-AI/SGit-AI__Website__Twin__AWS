@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The design — one interface, three backends · aws.twin.sgit.ai</title>
+<meta name="description" content="How the AWS twin is built: the interface manifest, the state document, the vault backend with commits, the live backend and what wiring it needs, snapshots and diffs, the account graph, templates as calls, and the tests that hold the two backends to the same answers.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/design/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/design/index.html">
+<meta property="og:title" content="The design — one interface, three backends · aws.twin.sgit.ai">
+<meta property="og:description" content="How the AWS twin is built: the interface manifest, the state document, the vault backend with commits, the live backend and what wiring it needs, snapshots and diffs, the account graph, templates as calls, and the tests that hold the two backends to the same answers.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../twin/index.html">Open the twin</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / design</div>
+  <h1>The design</h1>
+  <p class="lead">One AWS-shaped interface, and behind it a backend chosen at runtime: the vault, memory, or the live account. The claim this page has to earn is that consuming code written against the interface does not know which. The PoC earns it the way the S3 container does, by running the same script against two backends and checking the answers match.</p>
+
+  <h2 id="stack">1. One interface, three backends</h2>
+  <div class="stack">
+    <div class="layer consumer"><b>Consumers</b>: the UI on <a href="../twin/index.html">the twin page</a>, the two deployment templates, the account graph, the snapshot diff, the tests. None of them reads a backend's state; each makes calls.</div>
+    <div class="down">↓</div>
+    <div class="layer iface"><b>The interface</b>: <code>AwsTwin.client(backend, {accountId, region})</code>. Nine namespaces (eight AWS-shaped, one twin-only), 45 operations, a manifest of accepted params. One client per account and region, like an SDK client bound to a session.</div>
+    <div class="down">↓</div>
+    <div class="backs">
+      <div class="layer vault"><b>Vault</b> <span class="st st-poc">PoC</span><br>The ops over a state document, persisted to localStorage as a document with commits and a head. The twin proper.</div>
+      <div class="layer mem"><b>Memory</b> <span class="st st-poc">PoC</span><br>The same ops, nothing persisted. The test double, and the third backend in the S3 container's list.</div>
+      <div class="layer live"><b>Live</b> <span class="st st-design">slot built</span><br>Reads a session from the vault; would construct SDK v3 clients per call. In this PoC it refuses each call naming the command it would send.</div>
+    </div>
+  </div>
+  <p>The vault and memory backends share one implementation of the operations and differ only in <code>save()</code>. That is deliberate: it keeps the semantics in one place, and it is what lets the equivalence test hold without a special case.</p>
+
+  <h2 id="interface">2. The interface</h2>
+  <p>The shape follows the AWS SDK for JavaScript v3, because that is what the live backend will call: every operation takes one params object with the SDK's PascalCase keys (lower camel for CloudWatch Logs, as in AWS), returns a Promise of one result object, and fails with an error whose <code>code</code> is the AWS error name (<code>NoSuchBucket</code>, <code>ResourceConflictException</code>, <code>InvalidGroup.NotFound</code>). A param the manifest does not list is refused with <code>UnknownParam</code> before any backend sees it, so a typo cannot silently succeed on the vault and fail live.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Namespace</th><th>Operations in the manifest</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td><code>sts</code></td><td>getCallerIdentity</td><td>global</td></tr>
+      <tr><td><code>s3</code></td><td>listBuckets, createBucket, deleteBucket, headBucket, listObjectsV2, putObject, getObject, deleteObject</td><td>global; buckets carry a region</td></tr>
+      <tr><td><code>lambda</code></td><td>listFunctions, getFunction, createFunction, updateFunctionConfiguration, deleteFunction, invoke</td><td>per region</td></tr>
+      <tr><td><code>ec2</code></td><td>describeInstances, runInstances, startInstances, stopInstances, terminateInstances, describeSecurityGroups, createSecurityGroup, authorizeSecurityGroupIngress</td><td>per region</td></tr>
+      <tr><td><code>iam</code></td><td>listRoles, getRole, createRole, deleteRole, listPolicies, createPolicy, attachRolePolicy, detachRolePolicy, listAttachedRolePolicies</td><td>global</td></tr>
+      <tr><td><code>logs</code></td><td>describeLogGroups, createLogGroup, deleteLogGroup, putLogEvents, filterLogEvents</td><td>per region</td></tr>
+      <tr><td><code>ce</code></td><td>getCostAndUsage (monthly or daily, grouped by service or region)</td><td>global</td></tr>
+      <tr><td><code>cloudformation</code></td><td>listStacks, describeStacks, createStack, deleteStack</td><td>per region</td></tr>
+      <tr><td><code>twin</code></td><td>recordCost, snapshot, state</td><td>twin-only: never sent live</td></tr>
+    </tbody>
+  </table></div>
+  <p>The <code>twin</code> namespace is the one deliberate departure. AWS has no call that writes a cost; reality does that. The twin needs an input for it, and for reading the whole state to build a graph. Those live under <code>twin.*</code>, never under an AWS service name, so the boundary between AWS-shaped and twin-only stays visible in the call log, and the live backend refuses them with <code>TwinOnly</code> rather than inventing an endpoint.</p>
+  <p>Behaviour is kept where it is cheap and telling: a function needs a role that exists; a role cannot be deleted while a policy is attached or a function uses it; a bucket cannot be deleted while it holds objects; a bucket name is validated; instances and functions are per region, so stopping an instance from the wrong region fails with <code>InvalidInstanceID.NotFound</code>; invoking a function writes four lines to its log group. These are the behaviours a rehearsal is for.</p>
+
+  <h2 id="state">3. The state document</h2>
+  <p>One document per vault, one account record per account inside it. Every resource carries the region it lives in, and the per-region services filter on the client's region at call time.</p>
+  <pre class="shell"><span class="d">// AwsTwin.emptyState() → one account added</span>
+{ "version": 1,
+  "accounts": {
+    "111111111111": {
+      "accountId": "111111111111", "name": "sg-send-dev (illustrative)",
+      "s3":             { "buckets": [], "objects": {} },
+      "lambda":         { "functions": [] },
+      "ec2":            { "instances": [], "securityGroups": [] },
+      "iam":            { "roles": [], "policies": [], "attachments": [] },
+      "logs":           { "groups": [], "events": {} },
+      "ce":             { "records": [] },
+      "cloudformation": { "stacks": [] },
+      "twin":           { "invocations": [] }
+    }
+  }
+}</pre>
+  <p>Add a service by adding a key here, its operations to the manifest, and their implementation to the ops table; the tests fail until the manifest and the ops agree, which is the first test in the file.</p>
+
+  <h2 id="backends">4. The vault backend</h2>
+  <p>In the PoC the vault is the browser's localStorage, under one key, <code>aws.twin/vault</code>, holding one document:</p>
+  <pre class="shell"><span class="d">// aws.twin/vault@1</span>
+{ "format": "aws.twin/vault@1", "name": "aws-twin", "created": "…",
+  "head": "&lt;commit id&gt;",
+  "commits": [ { "id", "parent", "at", "message", "summary", "state" }, … ],
+  "working": { …the state document… } }</pre>
+  <p>That is the shape an sgit vault gives for free: a working tree, commits, a head. The export button on the snapshots page downloads exactly this document, and the import button continues from one, so the hand-off to a real vault is a file today and a sync later. Commit ids in the PoC are content hashes of the commit (not cryptographic; the vault's own hashes take over once the document is pushed through sgit). The full state is kept per commit because the states are small and a diff between any two commits must be cheap.</p>
+
+  <h2 id="snapshots">5. Snapshots, and the diff</h2>
+  <p>A snapshot is a commit of the whole state document. A diff flattens each account into resource keys (<code>s3:bucket name</code>, <code>lambda:function region/name</code>, <code>iam:role name</code>, …) with the fields that matter for "has this changed", and reports added, removed, changed and unchanged. The vault's working state can be diffed against any commit, which is how "uncommitted changes" is computed for the bar at the top of the twin page.</p>
+  <p>The diff keys are chosen, not derived: a bucket changes when its object count changes, a role when its attachments change, an instance when its state or type changes, the cost total when a record is added. That is the right level for Monday against Friday, and the wrong level for an audit, which would want every field. Both are available: the commit holds everything.</p>
+
+  <h2 id="live">6. The live backend, and what the wire needs</h2>
+  <p>The live backend's job is to answer the same manifest by sending each call to AWS with the session in the vault. In this PoC it has its slot and not its wire: it reads the session, checks it is present and unexpired, and then refuses with <code>NotWired</code>, naming the SDK command, the service endpoint, the region, the account and the expiry it would have used. The UI, the templates and the graph can all be pointed at it, and every call shows the gap precisely.</p>
+  <p>Wiring it needs three things, and nothing on the consuming side:</p>
+  <ol>
+    <li><b>The SDK for JavaScript v3 clients</b> for the eight services, constructed per call from the session's three values, with the region from the client's scope. Released as a fixed, independent copy per site version, so the code that holds the session is a known thing.</li>
+    <li><b>A CORS measurement per service.</b> AWS's SDK guide says S3 buckets need a CORS configuration before a browser can call them, and that CORS applies to other services too. Which endpoints answer a browser is the first thing to measure, and the result is a table on this site. Where one does not, a small helper on the user's own machine, or an SG/Compute node, makes that call behind the same interface: a fourth backend, not a change to the consumers.</li>
+    <li><b>Results back into the vault.</b> A live read is a snapshot like any other: the response is written into the state document and committed, so the live backend and the vault backend are not alternatives but a pair.</li>
+  </ol>
+  <div class="note"><b>Where the credential lives.</b> The twin's interface never holds it. The live backend reads it from the session slot, which is sessionStorage in this PoC: the tab's lifetime, never written to disk by the browser the way localStorage is, with the expiry the user gave it (one to twelve hours). The slot refuses a session without a token, because a long-lived IAM user key is exactly what this design declines to hold. This is the resolution the naming page proposes for the hub's ruling: <a href="../naming/index.html#ruling">a twin can have a live backend; the credential belongs to the backend, not the twin</a>.</div>
+
+  <h2 id="graph">7. The account graph</h2>
+  <p>Resources as nodes, relationships as edges, built from the state the interface returns via <code>twin.state</code>. Eight node kinds and six relations in the PoC:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Edge</th><th>From → to</th><th>Where it comes from</th></tr></thead>
+    <tbody>
+      <tr><td><code>attached_policy</code></td><td>role → policy</td><td>IAM attachments, including AWS managed policies as nodes</td></tr>
+      <tr><td><code>assumes_role</code></td><td>function → role</td><td>the function's <code>Role</code></td></tr>
+      <tr><td><code>uses_bucket</code></td><td>function → bucket</td><td>any environment variable whose value is a bucket name in the account</td></tr>
+      <tr><td><code>writes_logs</code></td><td>function → log group</td><td><code>/aws/lambda/&lt;name&gt;</code> in the same region</td></tr>
+      <tr><td><code>in_security_group</code>, <code>instance_profile</code></td><td>instance → security group, instance → role</td><td>the instance's groups and profile; terminated instances leave the graph</td></tr>
+      <tr><td><code>created</code></td><td>stack → resource</td><td>what the template reported creating</td></tr>
+    </tbody>
+  </table></div>
+  <p>The twin page draws it as layered SVG, one column per kind, and prints it as Mermaid for pasting elsewhere. The point is not the drawing. It is that the graph is a function of the state document, so it is the same function for a seeded account and a live snapshot, and a diff of two graphs is a diff of two commits.</p>
+
+  <h2 id="templates">8. Templates are calls</h2>
+  <p>A deployment template in the twin is a function given a client and the stack's parameters. It makes ordinary calls: create the role if missing, the per-account-per-region bucket if missing, the policy, attach it, create the function with its image and environment. CloudFormation's <code>createStack</code> runs the template against the interface itself, so the stack's resources are the ARNs those calls produced and the stack's deletion reverses the ones that belong to it. A rehearsal against the vault is therefore the same calls as the live run; only the backend differs.</p>
+  <p>Two templates ship, standing in for the SG/Send server components: Lambda as a container image with a function URL, and ECS Fargate. The manifest has no <code>ecs</code> namespace yet, so the Fargate template creates the role, bucket, security group and log group it can, and records the service it cannot as a stack output that says so: <i>not in the interface: tracked gap</i>. That is the discipline the twins hub asks for, applied to the twin's own coverage.</p>
+
+  <h2 id="tests">9. The tests</h2>
+  <p><code>node admin/build/test.js</code> runs the same script (bucket, objects, role, policy, function, invoke, instance, cost, two stacks, a deletion) against the memory backend and against the vault backend over a storage shim, normalises what is random by design (ids, timestamps, request ids, the invoke duration) and asserts the answers are identical, step by step. It then checks the expected answers, the commit and checkout round trip, the diff, the graph's node and edge counts after seeding, the session slot's parsing and refusals, and the async client the UI uses. As of 2026-10-21: 214 assertions, all passing, in under a second. The browser has no test runner; the twin page's call log is the manual one.</p>
+
+  <h2 id="open">10. Open in the design</h2>
+  <ul>
+    <li><b>Live and vault disagree.</b> When the wire exists, a live read will differ from the last commit. The vault is the record and live is the source; the right move is a commit, with the diff as the message. Nothing enforces that yet.</li>
+    <li><b>Staleness.</b> A commit carries its time, and the hub's first open question applies here exactly: a connected twin can be six days stale. The bar shows "uncommitted changes" and not "last read live at", because there is no live read yet.</li>
+    <li><b>Which services, which fields.</b> The manifest is what the first job needs plus what the article lists. ECS, Route 53, ECR and SSM are the obvious next namespaces; each is a key in the state document, a manifest entry and an ops entry.</li>
+    <li><b>Multi-account is multi-session.</b> A client is bound to one account because a session is. The deploy rehearsal makes one client per target. Live, that is one paste per account, which is the article's deliberate trade.</li>
+  </ul>
+  <div class="pagenav"><a href="../twin/index.html">← Open the twin</a><a href="../workflow/index.html">The workflow →</a></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../twin/index.html">Open the twin</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

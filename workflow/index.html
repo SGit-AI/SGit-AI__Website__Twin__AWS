@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The workflow — a session from the access portal, work in the browser, results in the vault · aws.twin.sgit.ai</title>
+<meta name="description" content="The AWS twin workflow: sign in to the AWS access portal, paste the temporary credentials into the vault, work for the session, keep the results as commits. The first job, deploying SG/Send server components to many accounts and regions, rehearsed against the twin. What to be careful about.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/workflow/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/workflow/index.html">
+<meta property="og:title" content="The workflow — a session from the access portal, work in the browser, results in the vault · aws.twin.sgit.ai">
+<meta property="og:description" content="The AWS twin workflow: sign in to the AWS access portal, paste the temporary credentials into the vault, work for the session, keep the results as commits. The first job, deploying SG/Send server components to many accounts and regions, rehearsed against the twin. What to be careful about.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../twin/index.html">Open the twin</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / workflow</div>
+  <h1>The workflow</h1>
+  <p class="lead">Two loops. The inner one is a session: an hour with one account and one role, borrowed from the AWS access portal and returned when it ends. The outer one is the vault: what each session found, kept as commits, so the next session starts from the record. In the proof of concept the inner loop is rehearsed against the vault; the outer loop works today.</p>
+
+  <h2 id="session">1. The session</h2>
+  <ol>
+    <li><b>Sign in to the AWS access portal.</b> It is part of IAM Identity Center. Pick the account, and the permission set you have in it. AWS's own distinction: IAM users are granted long-term credentials; users in IAM Identity Center are granted temporary ones, generated every time you sign in. It recommends the second.</li>
+    <li><b>Choose "Access keys".</b> The portal shows the temporary credentials for that role: an access key id, a secret access key and a session token, in four formats. Any of the four pastes into the twin's <a href="../twin/index.html#/session">session page</a>; the credentials-file format also carries the account id and the role in its profile header.</li>
+    <li><b>Paste them into the vault.</b> In this PoC: sessionStorage, for this tab, with the expiry you set. The twin switches its backend to <i>live</i>.</li>
+    <li><b>Work.</b> For as long as the session lasts, the live backend can do whatever that role can do, through the same interface the vault answers. When the session ends the credentials are worth nothing, and you sign in again.</li>
+  </ol>
+  <p>How long it lasts is set on the permission set: AWS says the session can be from one to twelve hours, with one hour by default. Copying and pasting is a little more work than the CLI's automatic refresh, and in return the site never sees anything but one short-lived session, for one account and one role.</p>
+  <div class="warnbox"><b>In this PoC the live backend is not wired.</b> Pasting a session proves the slot: the twin accepts it, counts it down, and refuses every call with the exact SDK command it would have sent. Nothing pasted leaves the browser and nothing on this site calls AWS. The work below is rehearsed against the vault backend, which is the twin-first point.</div>
+
+  <h2 id="work">2. The work, service by service</h2>
+  <p>What the twin page does today, against the vault, and will do live through the same calls:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Service</th><th>In the twin page</th><th>The calls</th></tr></thead>
+    <tbody>
+      <tr><td>S3</td><td>Buckets with their region; objects with prefix listing; put, get, delete</td><td><code>ListBuckets</code>, <code>ListObjectsV2</code>, <code>PutObject</code>, <code>GetObject</code>, <code>DeleteObject</code>, <code>CreateBucket</code>, <code>DeleteBucket</code></td></tr>
+      <tr><td>Lambda</td><td>What is deployed in the region, at which image or runtime, with which role and settings; invoke with a payload and read the log</td><td><code>ListFunctions</code>, <code>CreateFunction</code>, <code>Invoke</code>, <code>DeleteFunction</code></td></tr>
+      <tr><td>EC2</td><td>Instances and their state, security groups and their rules, instance profiles; run, stop, start, terminate</td><td><code>DescribeInstances</code>, <code>RunInstances</code>, <code>StopInstances</code>, <code>DescribeSecurityGroups</code>, <code>AuthorizeSecurityGroupIngress</code></td></tr>
+      <tr><td>IAM</td><td>Roles with their attached policies; create, attach, detach, delete with AWS's conflicts</td><td><code>ListRoles</code>, <code>ListAttachedRolePolicies</code>, <code>CreateRole</code>, <code>AttachRolePolicy</code></td></tr>
+      <tr><td>Billing</td><td>Cost by month, grouped by service or by region, as bars and a table</td><td><code>GetCostAndUsage</code></td></tr>
+      <tr><td>Logs</td><td>Log groups, events with a filter, your own events</td><td><code>DescribeLogGroups</code>, <code>FilterLogEvents</code>, <code>PutLogEvents</code></td></tr>
+      <tr><td>Deploy</td><td>Stacks with outputs and resources; a rehearsal across accounts and regions</td><td><code>CreateStack</code>, <code>DescribeStacks</code>, <code>DeleteStack</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="deploy">3. The first job: deploying the SG/Send servers</h2>
+  <p>The SG/Send server components, the small API that stores vaults, need to run in many regions and increasingly in many accounts. The pieces exist: CloudFormation templates for Lambda as a container image with a function URL and for ECS Fargate, an S3 storage mode with buckets named per account and region, runbooks for new accounts and regions. What is painful is running them across all of those and knowing afterwards what is deployed where.</p>
+  <p>In the twin, as of 2026-10-21:</p>
+  <ol>
+    <li>Open <a href="../twin/index.html#/deploy">Deploy</a> with the vault backend and the demo estate seeded. Both illustrative accounts already carry <code>sg-send-api</code> in two regions, at two image tags, from the seed.</li>
+    <li>Pick the template, name the stack, set the image tag, tick the accounts and the regions. The twin makes one client per account and region, as the live run will make one session per account.</li>
+    <li>Run it. Each target is a <code>CreateStack</code> that expands into the template's calls; the result table shows a stack per target, or AWS's <code>AlreadyExistsException</code> where one is already there.</li>
+    <li>Commit the deployment. The commit message names the stack, the template and how many targets took it, and the vault is now the record of the estate: which version, which region, which account, when, and what it produced. The next deployment starts from it.</li>
+  </ol>
+  <p>Live, step 3 is the same calls through the live backend, and step 4 is the same commit. The difference the twin makes is that steps 1 to 4 can be run, broken, and run again with no credentials, until the sequence is right.</p>
+
+  <h2 id="diff">4. Monday against Friday</h2>
+  <p>Commit on Monday. Work. Commit on Friday. On <a href="../twin/index.html#/snapshots">Snapshots</a>, diff the two: added, removed and changed, resource by resource, per account, with before and after. Because every snapshot is a commit, this works the same for data seeded by hand and, once the wire exists, for data read from the account; and because the vault document exports as a file, the same diff can be run outside the browser on two exported commits.</p>
+
+  <h2 id="careful">5. What to be careful about</h2>
+  <ul>
+    <li><b>A session can do whatever its role can do.</b> So the roles should be narrow: one for reading, another for deploying, never more than the job needs. The demo estate seeds a <code>twin-reader</code> role with a describe-and-list policy as the example to copy.</li>
+    <li><b>Short sessions are the default.</b> One hour, unless there is a reason for more. The session page caps at twelve, as the portal does.</li>
+    <li><b>The site's own code is what holds the session.</b> So it should be released the way the family's API sites are, each version a fixed, independent copy, so you know exactly which code you trusted. This site is versioned from its first release for that reason.</li>
+    <li><b>Credentials never go in a page or a repository.</b> AWS's guidance for browser code is not to hard-code them. Here they are pasted for one session and kept in the vault; this site's name-watch and validator never see one, and the PoC never shows a secret back.</li>
+    <li><b>Some calls may need a helper.</b> Where a service will not answer a browser. That is a fourth backend behind the same interface, not a change to the work.</li>
+  </ul>
+
+  <h2 id="pki">6. Is there a PKI way?</h2>
+  <p>Copying credentials from the portal is good enough to start. It would be better if the session came from a key, as everything else in the family now does. AWS has a service for exactly that: IAM Roles Anywhere exchanges X.509 certificates issued by your own certificate authority, registered as a trust anchor, for temporary credentials. Whether it can work from a browser, signing with a key the browser cannot export, and whether its endpoint answers a browser at all, is untested. Its trust anchors are per account and per region. If it works, it is a fifth backend: the same interface, a session minted from a certificate rather than pasted.</p>
+  <div class="pagenav"><a href="../design/index.html">← The design</a><a href="../naming/index.html">Why aws.twin →</a></div>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../twin/index.html">Open the twin</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

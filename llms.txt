@@ -1,0 +1,94 @@
+# aws.twin.sgit.ai — the AWS twin
+
+> An AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs, CloudFormation) whose
+> backend is a vault, so everything built against the twin works against the live
+> account once a temporary IAM Identity Center session is put in front of the same
+> interface as a second backend. One instance in the twins family; the primitive is
+> defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
+> with localStorage as the vault.
+
+Site version: v0.1.0 (21 October 2026). Published by the sgit project, which builds the
+vault this twin stores into and the SG/Send server components its first job deploys. Not
+affiliated with Amazon Web Services; service names identify the interfaces mirrored. All
+content CC BY 4.0; the code is Apache-2.0.
+
+## Status, stated plainly
+
+THE TWIN WORKS IN THE BROWSER AGAINST A VAULT. NOTHING CALLS AWS. The interface, the
+vault backend (localStorage, with commits), the memory backend, snapshots and diff, the
+account graph, two deployment templates, a demo estate and the UI are built and tested
+(214 assertions, node admin/build/test.js). The live backend has its session slot and not
+its wire: it accepts a pasted session, counts it down, and refuses every call naming the
+SDK command it would have sent. CORS per service is not measured. IAM Roles Anywhere from
+a browser is untested. Sync of the vault document through sgit is designed; export and
+import by file stand in. Do not report the live backend as working.
+
+## Properties agents may rely on
+
+- The interface is one manifest: AwsTwin.MANIFEST in /assets/twin/interface.js. Eight
+  AWS-shaped namespaces (sts, s3, lambda, ec2, iam, logs, ce, cloudformation) with 42
+  operations, plus one twin-only namespace (twin: recordCost, snapshot, state) with 3.
+  A param not in the manifest is refused with UnknownParam before any backend sees it.
+- A client is bound to one account and one region: AwsTwin.client(backend, {accountId,
+  region}). Every operation takes one params object (SDK v3 PascalCase keys) and
+  returns a Promise of one result; errors carry an AWS-shaped `code`.
+- The vault document is /assets/twin/vault.js's "aws.twin/vault@1": {format, name,
+  created, head, commits[{id, parent, at, message, summary, state}], working}. It is
+  the shape an sgit vault holds, and the export from the snapshots page is this document.
+- The state document is version 1: {version: 1, accounts: {<12 digits>: {accountId,
+  name, s3, lambda, ec2, iam, logs, ce, cloudformation, twin}}}.
+- The twin page stores three keys and nothing else: aws.twin/vault (localStorage),
+  aws.twin/session (sessionStorage, with expiry), aws.twin/ui (localStorage). No
+  cookies, no analytics, no third-party script, no network call after load.
+- The code runs unchanged in Node and in the browser (UMD), with no dependency.
+
+## The design, in one paragraph
+
+Build the twin first: an AWS-shaped interface with the vault as its backend. Put the
+real connection in front of it as a second backend behind the same interface: a
+temporary session from the AWS access portal, pasted into the user's vault, one to
+twelve hours, one by default. Everything built against the twin then works against the
+live account, because consuming code is written against the interface, not the backend.
+This is the pattern of the one working twin today, the S3-compatible vault container
+(boto3 cannot tell the difference; the backend is real S3, a vault or memory). The AWS
+twin is the second instance of that pattern. /design/index.html
+
+## The naming decision (21 October 2026)
+
+Domain aws.twin.sgit.ai; repository SGit-AI__Website__Twin__AWS; hub twins.sgit.ai.
+Convention: plural is the hub (twins., hooks., providers.), singular is one instance
+(aws.twin., tokens.hook., elevenlabs.provider.), repositories
+SGit-AI__Website__<Family>__<Instance> with the family singular. Rejected: aws.sgit.ai
+(loses the twin-first framing), aws.platform.sgit.ai (names nothing), aws.provider.sgit.ai
+(provider sites are reports, not tools). This site proposes a paragraph for the hub's
+naming ruling: a twin's interface never holds credentials; a twin can have a live
+backend; when it does the credential belongs to that backend, not the twin, and lives in
+the user's vault for the session; the execution broker stays distinct. This site writes
+"the AWS twin" in lower case and runs the hub's name-watch. /naming/index.html
+
+## The workflow
+
+Sign in to the AWS access portal, pick account and permission set, choose "Access keys",
+paste (four formats parse) into the twin's session page, work for the session, keep the
+results as commits. First job: deploy the SG/Send server components, one template, one
+session per account, several regions, every deployment written in the vault. Rehearsed
+against the twin today on /twin/index.html#/deploy. /workflow/index.html
+
+## Page map
+
+/                      the front page: in short, the flow, the build state, why a twin
+/twin/                 the twin: the application (backend drop-down: vault, memory, live)
+/design/               interface, state document, vault backend, live backend, diff, graph, templates, tests
+/workflow/             the session, the work per service, the first job, Monday vs Friday, cautions, PKI
+/naming/               the decision, the convention, the paragraph proposed for the hub, the name-watch
+/shipped/              built and designed, the numbers, what is next, what this does not claim
+/admin/                repository, how to run and test, storage keys, validator, releases, requests to other sites
+/admin/versions.html   release history
+/assets/twin/*.js      the code
+
+## The network
+
+twins.sgit.ai owns the primitive and the naming ruling; this site is one instance.
+sg-compute.sgit.ai ships the S3 twin, the pattern this site follows. newsroom.sgit.ai
+carries the article of 21 October 2026 this site builds. sgit.ai is the parent project
+and holds the SG/Send templates and runbooks the first job deploys.

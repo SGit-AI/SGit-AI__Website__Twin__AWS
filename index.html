@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>aws.twin.sgit.ai — the AWS twin: an AWS-shaped interface with a vault behind it, and a live session as one backend among several</title>
+<meta name="description" content="The AWS twin: S3, Lambda, EC2, IAM, billing and logs as one interface, with a vault as the backend, so everything built against the twin works against the live account once a temporary IAM Identity Center session is put in front of it. A proof of concept in the browser, with localStorage as the vault.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/index.html">
+<meta property="og:title" content="aws.twin.sgit.ai — the AWS twin: an AWS-shaped interface with a vault behind it, and a live session as one backend among several">
+<meta property="og:description" content="The AWS twin: S3, Lambda, EC2, IAM, billing and logs as one interface, with a vault as the backend, so everything built against the twin works against the live account once a temporary IAM Identity Center session is put in front of it. A proof of concept in the browser, with localStorage as the vault.">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="admin/versions.html" title="Site release history">v0.1.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="twin/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="twin/index.html">Open the twin</a>
+      <a class="sl" href="design/index.html">The design</a>
+      <a class="sl" href="workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="naming/index.html">Why aws.twin</a>
+      <a class="sl" href="naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="shipped/index.html">Built, and designed</a>
+      <a class="sl" href="shipped/index.html#next">What is next</a>
+      <a class="sl" href="shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="admin/versions.html">Release history</a>
+      <a class="sl" href="admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="assets/nav.js" defer></script>
+</div></nav>
+
+<header class="hero">
+  <div class="eyebrow">The AWS twin · one instance of the twin primitive · proposed and prototyped 2026-10-21</div>
+  <h1>AWS from the vault,<br>twin first</h1>
+  <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. The live backend has its slot and not yet its wire.</p>
+  <div class="ctas">
+    <a class="cta1" href="twin/index.html">Open the twin →</a>
+    <a class="cta2" href="design/index.html">The design →</a>
+    <a class="cta2" href="workflow/index.html">The workflow →</a>
+  </div>
+</header>
+
+<section class="band alt" id="short">
+  <h2>In short</h2>
+  <div class="cards">
+    <a class="card" href="design/index.html#interface"><span class="tag">The interface</span><h3>AWS-shaped, and fixed</h3><p>One client per account and region, one params object per call, AWS-shaped results and error codes, in the shape of the AWS SDK for JavaScript v3. Consuming code is written against this and nothing else.</p><span class="go">Read →</span></a>
+    <a class="card" href="design/index.html#backends"><span class="tag">The backends</span><h3>Vault, memory, live</h3><p>The same three the S3 container has. The vault backend is the twin; memory is the test double; live is the real account, borrowed for a session. Swappable from a drop-down in the PoC.</p><span class="go">Read →</span></a>
+    <a class="card" href="workflow/index.html#session"><span class="tag">The session</span><h3>From the access portal, into the vault</h3><p>Temporary credentials for one account and one role, one to twelve hours. Pasted, not configured. When it ends it is worth nothing. The twin's interface never holds it; the live backend borrows it.</p><span class="go">Read →</span></a>
+    <a class="card" href="design/index.html#snapshots"><span class="tag">The data</span><h3>Snapshots are commits</h3><p>Everything the twin holds is a state document in the vault. Every snapshot is a commit, so "what changed between Monday and Friday" is a diff, the same for hand-seeded and live-sourced data.</p><span class="go">Read →</span></a>
+    <a class="card" href="design/index.html#graph"><span class="tag">The graph</span><h3>Resources as nodes, relationships as edges</h3><p>Role → policy, function → bucket, instance → security group, stack → what it created. Built from the state the interface returns, readable as SVG or as Mermaid.</p><span class="go">Read →</span></a>
+    <a class="card" href="workflow/index.html#deploy"><span class="tag">The first job</span><h3>Deploy the SG/Send servers</h3><p>One template, one session per account, several regions, every deployment written down in the vault. Rehearsed against the twin in the PoC; the live run is the same calls.</p><span class="go">Read →</span></a>
+  </div>
+</section>
+
+<section class="band" id="flow">
+  <h2>The flow</h2>
+  <p class="blurb">The article's diagram, with one change: the site in the browser is a twin, and the live session is a backend behind its interface, not the only way it works.</p>
+  <div class="flow">
+    <div class="fb aws"><span class="lbl">1 · AWS</span><b>Access portal</b>Sign in, pick the account and the permission set, choose "Access keys".</div>
+    <div class="fb aws"><span class="lbl">2 · temporary</span><b>Credentials</b>Access key, secret, session token. One to twelve hours, one by default.</div>
+    <div class="fb vault"><span class="lbl">3 · the vault</span><b>The session, and the data</b>Pasted in for the session's lifetime. The same vault holds inventories, logs, costs and snapshots.</div>
+    <div class="fb twin"><span class="lbl">4 · the twin</span><b>aws.twin in the browser</b>One AWS-shaped interface. Behind it: the vault, memory, or the live session.</div>
+    <div class="fb aws"><span class="lbl">5 · live, when wired</span><b>AWS</b>S3, Lambda, EC2, IAM, billing, logs, through the SDK for JavaScript. Results go back to step 3.</div>
+    <div class="fb vault"><span class="lbl">6 · the record</span><b>Graphs and workflows</b>Snapshots as commits, the account graph, deployments written down.</div>
+  </div>
+</section>
+
+<section class="band alt" id="state">
+  <h2>Built, and designed, 2026-10-21</h2>
+  <p class="blurb">A site about a twin owes the reader its build state before anything else. Here it is, unsoftened; the full table with evidence is on <a href="shipped/index.html">the status page</a>.</p>
+  <div class="split">
+    <table>
+      <thead><tr><th>Artefact</th><th class="safe">State</th><th>What it proves</th></tr></thead>
+      <tbody>
+        <tr><td><b>The interface</b>: 8 AWS-shaped namespaces, 42 operations, one manifest</td><td><span class="st st-poc">PoC, working</span></td><td>Consuming code has one thing to be written against. The UI, the templates and the tests all are.</td></tr>
+        <tr><td><b>The vault backend</b> on localStorage, and the memory backend</td><td><span class="st st-poc">PoC, working</span></td><td>Same script, two backends, same answers: 214 assertions in <code>admin/build/test.js</code></td></tr>
+        <tr><td><b>Snapshots as commits</b>, diff between any two</td><td><span class="st st-poc">PoC, working</span></td><td>Monday against Friday, resource by resource. Export and import of the vault document.</td></tr>
+        <tr><td><b>The account graph</b></td><td><span class="st st-poc">PoC, working</span></td><td>Eight node kinds, six edge relations, from the state the interface returns</td></tr>
+        <tr><td><b>Deployment rehearsal</b>: two templates, accounts × regions</td><td><span class="st st-poc">PoC, working</span></td><td>A template is a sequence of ordinary calls, so the rehearsal and the live run are the same calls. ECS is not in the manifest: the Fargate template records that gap on its stack.</td></tr>
+        <tr><td><b>The live backend</b>: the session slot, the refusal naming the SDK command</td><td><span class="st st-design">slot built, wire designed</span></td><td>The same interface; every call says what it would send. Nothing calls AWS yet.</td></tr>
+        <tr><td><b>CORS per service</b>, IAM Roles Anywhere from a browser, sgit sync of the vault document</td><td><span class="st st-no">not done</span></td><td>To measure, to test, and to build. Export and import by file stand in for sync today.</td></tr>
+      </tbody>
+    </table>
+    <p class="cap">The honest headline: <b>the twin works in the browser against a vault; the wire to the live account is the next step, and nothing on this site pretends otherwise.</b> The article of 2026-10-21 said "nothing here is built"; this site is the same day's first go.</p>
+  </div>
+</section>
+
+<section class="band" id="why">
+  <h2>Why a twin, and not a console</h2>
+  <div class="split">
+    <blockquote>The S3-compatible vault container works because <b>"code using boto3 believes it is talking to real S3"</b> while the backend is real S3, a vault, or memory, chosen per environment, and <b>"the service's own code does not change."</b></blockquote>
+    <p class="cap">The AWS twin is the second instance of that pattern, not an exception to it. Build the twin first, with the vault as its backend, and every workflow, graph and deployment is written against the interface. Then the live connection is one more backend: a temporary session, borrowed for an hour, in front of the same face. Develop and test with no credentials; rehearse a multi-account, multi-region deploy before running it live; and keep one record either way, because snapshots are vault commits whether the data was seeded by hand or read from the account. <a href="naming/index.html">Why that made it <code>aws.twin</code> and not <code>aws.sgit.ai</code> →</a></p>
+  </div>
+</section>
+
+<section class="band alt" id="stores">
+  <h2>What this proof of concept stores, and where</h2>
+  <p class="blurb">Nothing leaves the browser. There is no server behind this site, no analytics, and no third-party script.</p>
+  <div class="cards">
+    <div class="card"><span class="tag">localStorage · aws.twin/vault</span><h3>The twin's data</h3><p>One document: a working state, a list of commits, a head. The shape an sgit vault holds, so the export is what gets pushed there. Illustrative accounts from the seed, or whatever you create.</p></div>
+    <div class="card"><span class="tag">sessionStorage · aws.twin/session</span><h3>The session, if you paste one</h3><p>For this tab's lifetime, with the expiry you give it. The secret and the token are never shown back. In this PoC the live backend refuses every call with the command it would have sent, so pasting a session proves the slot and nothing more.</p></div>
+    <div class="card"><span class="tag">localStorage · aws.twin/ui</span><h3>Which backend, account and region</h3><p>The three drop-downs, so the page reopens where you left it. Nothing else.</p></div>
+  </div>
+</section>
+
+<section class="band" id="participant">
+  <h2>Who is writing this</h2>
+  <p class="blurb">This site is published by the sgit project, which builds the vault this twin stores into and the SG/Send server components its first job deploys. So it is a participant publishing a tool for its own workflow, stated upfront. It is not affiliated with Amazon Web Services; the service names identify the interfaces the twin mirrors, and the quotations about sessions and CORS are from AWS's documentation as read on 2026-10-21 for <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">the article</a>. The build state leads, every designed thing is labelled as design, and <a href="shipped/index.html#claims">what this does not claim</a> is a page of its own.</p>
+  <div class="ctas">
+    <a class="cta2" href="shipped/index.html">Built, and designed, in full →</a>
+    <a class="cta2" href="https://twins.sgit.ai/about/participant.html">The family's participant disclosure ↗</a>
+  </div>
+</section>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="admin/versions.html">v0.1.0</a> · <a href="admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="twin/index.html">Open the twin</a>
+    <a href="design/index.html">The design</a>
+    <a href="workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="naming/index.html">Why aws.twin</a>
+    <a href="naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="shipped/index.html">Built, and designed</a>
+    <a href="shipped/index.html#next">What is next</a>
+    <a href="shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="admin/index.html">Admin &amp; engineering</a>
+    <a href="admin/versions.html">Release history</a>
+    <a href="llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>
