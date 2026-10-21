@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" height="470" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="13">
+  <title>What was built, as one stack: consumers, one interface, three backends</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5c5f66"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b45309"/></marker>
+  </defs>
+  <rect x="0" y="0" width="900" height="470" fill="#faf9f5"/>
+
+  <!-- consumers -->
+  <text x="30" y="34" font-size="11" fill="#5c5f66" letter-spacing="2" font-weight="700">CONSUMERS · NONE READS A BACKEND'S STATE</text>
+  <g fill="#ffffff" stroke="#8a8d94">
+    <rect x="30" y="46" width="150" height="40" rx="8"/>
+    <rect x="195" y="46" width="150" height="40" rx="8"/>
+    <rect x="360" y="46" width="150" height="40" rx="8"/>
+    <rect x="525" y="46" width="150" height="40" rx="8"/>
+    <rect x="690" y="46" width="180" height="40" rx="8"/>
+  </g>
+  <g fill="#1c1d21" text-anchor="middle">
+    <text x="105" y="70">the twin page's UI</text>
+    <text x="270" y="70">two deploy templates</text>
+    <text x="435" y="70">the account graph</text>
+    <text x="600" y="70">the snapshot diff</text>
+    <text x="780" y="70">the tests (214 assertions)</text>
+  </g>
+  <g stroke="#5c5f66" stroke-width="1.5" marker-end="url(#a)">
+    <line x1="105" y1="86" x2="300" y2="130"/>
+    <line x1="270" y1="86" x2="380" y2="130"/>
+    <line x1="435" y1="86" x2="440" y2="130"/>
+    <line x1="600" y1="86" x2="500" y2="130"/>
+    <line x1="780" y1="86" x2="580" y2="130"/>
+  </g>
+
+  <!-- interface -->
+  <rect x="130" y="134" width="640" height="96" rx="12" fill="rgba(29,78,216,.06)" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="150" y="158" font-size="11" fill="#1d4ed8" letter-spacing="2" font-weight="700">THE INTERFACE · ONE MANIFEST</text>
+  <text x="150" y="180" fill="#1c1d21" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">AwsTwin.client(backend, {accountId, region}) → sts · s3 · lambda · ec2 · iam · logs · ce · cloudformation</text>
+  <text x="150" y="200" fill="#34363c" font-size="12">42 AWS-shaped operations in the SDK v3 shape, one params object, AWS-shaped error codes, every call logged</text>
+  <text x="150" y="218" fill="#34363c" font-size="12">+ twin.recordCost, twin.snapshot, twin.state: twin-only, refused by the live backend by name</text>
+
+  <g stroke="#5c5f66" stroke-width="1.5" marker-end="url(#a)">
+    <line x1="300" y1="230" x2="180" y2="276"/>
+    <line x1="450" y1="230" x2="450" y2="276"/>
+    <line x1="600" y1="230" x2="720" y2="276"/>
+  </g>
+
+  <!-- backends -->
+  <text x="30" y="268" font-size="11" fill="#5c5f66" letter-spacing="2" font-weight="700">BACKENDS · SWAPPABLE FROM A DROP-DOWN</text>
+  <rect x="30" y="280" width="270" height="130" rx="12" fill="rgba(15,118,110,.07)" stroke="#0f766e" stroke-width="2"/>
+  <text x="48" y="304" font-weight="700" fill="#101114">vault</text>
+  <text x="48" y="322" font-size="12" fill="#34363c">localStorage, one document:</text>
+  <text x="48" y="340" font-size="12" fill="#34363c">working state, commits, head</text>
+  <text x="48" y="358" font-size="12" fill="#34363c">checkout, diff, export, import</text>
+  <rect x="48" y="374" width="48" height="20" rx="10" fill="rgba(15,118,110,.12)" stroke="#0f766e"/>
+  <text x="72" y="388" font-size="10" text-anchor="middle" fill="#0f766e" font-weight="700">BUILT</text>
+
+  <rect x="315" y="280" width="270" height="130" rx="12" fill="rgba(161,98,7,.06)" stroke="#a16207" stroke-width="2"/>
+  <text x="333" y="304" font-weight="700" fill="#101114">memory</text>
+  <text x="333" y="322" font-size="12" fill="#34363c">the same operations, nothing persisted</text>
+  <text x="333" y="340" font-size="12" fill="#34363c">the test double, and the third backend</text>
+  <text x="333" y="358" font-size="12" fill="#34363c">in the S3 container's own list</text>
+  <rect x="333" y="374" width="48" height="20" rx="10" fill="rgba(161,98,7,.12)" stroke="#a16207"/>
+  <text x="357" y="388" font-size="10" text-anchor="middle" fill="#a16207" font-weight="700">BUILT</text>
+
+  <rect x="600" y="280" width="270" height="130" rx="12" fill="rgba(180,83,9,.06)" stroke="#b45309" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="618" y="304" font-weight="700" fill="#101114">live</text>
+  <text x="618" y="322" font-size="12" fill="#34363c">reads a pasted session from sessionStorage,</text>
+  <text x="618" y="340" font-size="12" fill="#34363c">counts it down, refuses every call naming</text>
+  <text x="618" y="358" font-size="12" fill="#34363c">the SDK command it would have sent</text>
+  <rect x="618" y="374" width="136" height="20" rx="10" fill="rgba(180,83,9,.12)" stroke="#b45309"/>
+  <text x="686" y="388" font-size="10" text-anchor="middle" fill="#b45309" font-weight="700">SLOT BUILT · WIRE DESIGNED</text>
+
+  <!-- aws -->
+  <line x1="735" y1="410" x2="735" y2="440" stroke="#b45309" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ad)"/>
+  <text x="748" y="430" font-size="11" fill="#b45309" font-weight="700">not wired</text>
+  <rect x="600" y="440" width="270" height="24" rx="6" fill="#ffffff" stroke="#b45309"/>
+  <text x="735" y="456" font-size="12" text-anchor="middle" fill="#34363c">AWS: nothing on this site calls it</text>
+
+  <!-- vault note -->
+  <text x="30" y="440" font-size="11" fill="#5c5f66">The vault and memory backends share one implementation of the semantics and differ in save().</text>
+  <text x="30" y="456" font-size="11" fill="#5c5f66">That is what lets one script run against both and assert identical answers.</text>
+</svg>

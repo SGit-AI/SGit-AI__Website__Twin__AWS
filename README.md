@@ -26,6 +26,9 @@ assets/twin/interface.js        the interface: manifest, ops, StateBackend, Memo
 assets/twin/vault.js            VaultBackend over a key/value store, with commits; SessionStore
 assets/twin/templates.js        the two deployment templates and the demo estate
 assets/twin/app.js  app.css     the UI
+articles/                       the articles (built), their data under data/, figures under images/
+admin/content/articles/*.md     the articles' sources, in the newsroom's format
+admin/build/articles.py         builds articles/ from the sources; the gate for the writing rules
 admin/build/test.js             the interface tests (node, no dependencies)
 admin/build/validate.js         links, nav, versions, name-watch, no credential-shaped strings
 admin/versions.html  llms.txt
@@ -37,12 +40,15 @@ admin/versions.html  llms.txt
 python3 -m http.server 8080          # any static server; file:// works for the twin page too
 # open http://localhost:8080/twin/index.html
 
+python3 admin/build/articles.py      # build articles/ from admin/content/articles/
 node admin/build/test.js             # the same script against the memory and vault backends
-node admin/build/validate.js         # the site checks; both are the release gate
+node admin/build/validate.js         # the site checks; the three are the release gate
 ```
 
-No build step, no dependency, no third-party script. The twin's code is UMD and runs
-unchanged in Node and in the browser.
+No build step to serve, no dependency, no third-party script on the site's pages. The
+twin's code is UMD and runs unchanged in Node and in the browser. The one page that loads
+from elsewhere is the experiment under `articles/data/boto3-twin.html` (Pyodide from
+cdn.jsdelivr.net, boto3 from PyPI), which an article was written from.
 
 ## What the twin stores in the browser
 

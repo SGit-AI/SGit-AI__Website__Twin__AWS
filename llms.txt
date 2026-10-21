@@ -7,7 +7,7 @@
 > defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
 > with localStorage as the vault.
 
-Site version: v0.1.0 (21 October 2026). Published by the sgit project, which builds the
+Site version: v0.2.0 (21 October 2026). Published by the sgit project, which builds the
 vault this twin stores into and the SG/Send server components its first job deploys. Not
 affiliated with Amazon Web Services; service names identify the interfaces mirrored. All
 content CC BY 4.0; the code is Apache-2.0.
@@ -19,9 +19,16 @@ vault backend (localStorage, with commits), the memory backend, snapshots and di
 account graph, two deployment templates, a demo estate and the UI are built and tested
 (214 assertions, node admin/build/test.js). The live backend has its session slot and not
 its wire: it accepts a pasted session, counts it down, and refuses every call naming the
-SDK command it would have sent. CORS per service is not measured. IAM Roles Anywhere from
-a browser is untested. Sync of the vault document through sgit is designed; export and
-import by file stand in. Do not report the live backend as working.
+SDK command it would have sent. MEASURED THE SAME DAY, with no credentials, and published
+in /articles/boto3-in-the-browser.html with the data under /articles/data/: CORS from a
+browser page is answered by STS, Lambda, EC2, IAM, CloudWatch Logs, Cost Explorer and
+CloudFormation (Access-Control-Allow-Origin: *, preflight allowing authorization,
+x-amz-date, content-type) and blocked for S3 without a bucket rule; boto3 1.43.116 runs
+under Pyodide 0.28.3 in the browser once Pyodide's unvendored ssl package is loaded, and
+made eleven SigV4-signed calls against the twin through one replaced transport function
+in 10.0 s wall and 24.2 MB. No call to AWS with real credentials has been made. IAM Roles
+Anywhere from a browser is untested. Sync of the vault document through sgit is designed;
+export and import by file stand in. Do not report the live backend as working.
 
 ## Properties agents may rely on
 
@@ -74,6 +81,19 @@ results as commits. First job: deploy the SG/Send server components, one templat
 session per account, several regions, every deployment written in the vault. Rehearsed
 against the twin today on /twin/index.html#/deploy. /workflow/index.html
 
+## The articles (/articles/, the newsroom's format, importable unchanged)
+
+Two kinds of author, marked in every byline: Dinis Cruz through an agent (a voice memo in
+his voice under his name) and aws-twin.build, the build agent, in its own voice. Index as
+data: /articles/articles.json. Markdown twin beside every article: /articles/<slug>.md.
+- /articles/first-go-at-the-aws-twin.html (aws-twin.build, 2026-10-21): what was built in
+  the first session, the shape chosen, the tests, three things got wrong first, the commit.
+- /articles/boto3-in-the-browser.html (Dinis Cruz, 2026-10-21, a research brief): the AWS
+  SDK for JavaScript v3's maturity from npm's own data; boto3 under Pyodide against the
+  twin, measured; the CORS table per service; the transport hook as the place traffic is
+  seen, simulated, replayed or continued to AWS; OSBot-AWS not yet tried.
+- /about/team.html: who the two authors are.
+
 ## Page map
 
 /                      the front page: in short, the flow, the build state, why a twin
@@ -83,6 +103,8 @@ against the twin today on /twin/index.html#/deploy. /workflow/index.html
 /naming/               the decision, the convention, the paragraph proposed for the hub, the name-watch
 /shipped/              built and designed, the numbers, what is next, what this does not claim
 /admin/                repository, how to run and test, storage keys, validator, releases, requests to other sites
+/articles/            the articles, their index as articles.json, data under data/, figures under images/
+/about/team.html       the team
 /admin/versions.html   release history
 /assets/twin/*.js      the code
 

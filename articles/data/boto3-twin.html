@@ -1,0 +1,145 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>boto3 in the browser, against the twin: an experiment page, not a site page. Loads Pyodide from cdn.jsdelivr.net and boto3 from PyPI.</title></head>
+<body>
+<pre id="log"></pre>
+<script src="../../assets/twin/interface.js"></script>
+<script src="../../assets/twin/vault.js"></script>
+<script src="../../assets/twin/templates.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js"></script>
+<script>
+/* The bridge: botocore's HTTP session, replaced in Python, hands every prepared request
+   (method, url, headers, body) to this function, which answers it from the twin's
+   interface. Three AWS protocols are enough for the experiment: S3 (rest-xml, path
+   style), STS (query), Lambda (rest-json). Everything else is refused with 501 and the
+   url, which is itself a finding. */
+window.__bridgeCalls = [];
+(function () {
+  var AT = window.AwsTwin, V = window.AwsTwinVault, T = window.AwsTwinTemplates;
+  var mem = {}; var store = { getItem: k => k in mem ? mem[k] : null, setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
+  var vault = new V.VaultBackend(window.localStorage || store);
+  T.register(vault);
+  vault.ensureAccount('111111111111', 'bridge-test');
+  var esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function xmlBuckets(r) {
+    return '<?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>' + r.Owner.ID + '</ID></Owner><Buckets>' +
+      r.Buckets.map(b => '<Bucket><Name>' + esc(b.Name) + '</Name><CreationDate>' + b.CreationDate + '</CreationDate></Bucket>').join('') + '</Buckets></ListAllMyBucketsResult>';
+  }
+  function xmlList(r) {
+    return '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>' + esc(r.Name) + '</Name><Prefix>' + esc(r.Prefix) + '</Prefix><KeyCount>' + r.KeyCount + '</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated>' +
+      r.Contents.map(o => '<Contents><Key>' + esc(o.Key) + '</Key><LastModified>' + o.LastModified + '</LastModified><ETag>' + esc(o.ETag) + '</ETag><Size>' + o.Size + '</Size><StorageClass>STANDARD</StorageClass></Contents>').join('') + '</ListBucketResult>';
+  }
+  function xmlError(code, msg, status) { return { status: status || 400, headers: { 'content-type': 'application/xml' }, body: '<?xml version="1.0" encoding="UTF-8"?><Error><Code>' + code + '</Code><Message>' + esc(msg) + '</Message><RequestId>twin</RequestId></Error>' }; }
+  window.twinBridge = function (method, url, headersJson, body) {
+    var headers = JSON.parse(headersJson || '{}');
+    var u = new URL(url);
+    var region = (u.host.match(/\.([a-z]{2}-[a-z]+-\d)\./) || [])[1] || 'eu-west-2';
+    var c = AT.client(vault, { accountId: '111111111111', region: region }, null, { sync: true });
+    var rec = { method: method, url: url, signed: !!(headers.Authorization || headers.authorization), auth: (headers.Authorization || headers.authorization || '').slice(0, 60) };
+    window.__bridgeCalls.push(rec);
+    var reply = function (status, body, ctype, extra) { rec.status = status; return { status: status, headers: Object.assign({ 'content-type': ctype || 'application/xml', 'x-amzn-requestid': 'twin' }, extra || {}), body: body }; };
+    try {
+      var svc = u.host.split('.')[0];
+      if (svc === 's3') {
+        var parts = u.pathname.split('/').filter(Boolean);
+        var bucket = parts[0], key = parts.slice(1).join('/');
+        if (method === 'GET' && !bucket) return reply(200, xmlBuckets(c.s3.listBuckets({})));
+        if (method === 'PUT' && bucket && !key) { c.s3.createBucket({ Bucket: bucket, Region: region }); return reply(200, ''); }
+        if (method === 'GET' && bucket && !key) return reply(200, xmlList(c.s3.listObjectsV2({ Bucket: bucket, Prefix: u.searchParams.get('prefix') || '' })));
+        if (method === 'PUT' && key) { var r = c.s3.putObject({ Bucket: bucket, Key: key, Body: body, ContentType: headers['Content-Type'] || headers['content-type'] }); return reply(200, '', 'application/xml', { ETag: r.ETag }); }
+        if (method === 'GET' && key) { var o = c.s3.getObject({ Bucket: bucket, Key: key }); return reply(200, o.Body, o.ContentType, { ETag: o.ETag, 'content-length': String(o.ContentLength) }); }
+        if (method === 'DELETE' && key) { c.s3.deleteObject({ Bucket: bucket, Key: key }); return reply(204, ''); }
+      }
+      if (svc === 'sts' && /Action=GetCallerIdentity/.test(body || u.search)) {
+        var id = c.sts.getCallerIdentity({});
+        return reply(200, '<GetCallerIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/"><GetCallerIdentityResult><Arn>' + id.Arn + '</Arn><UserId>' + id.UserId + '</UserId><Account>' + id.Account + '</Account></GetCallerIdentityResult><ResponseMetadata><RequestId>twin</RequestId></ResponseMetadata></GetCallerIdentityResponse>');
+      }
+      if (svc === 'lambda' && method === 'GET' && /^\/2015-03-31\/functions\/?$/.test(u.pathname)) {
+        return reply(200, JSON.stringify(c.lambda.listFunctions({})), 'application/json');
+      }
+      rec.status = 501;
+      return { status: 501, headers: { 'content-type': 'application/xml' }, body: '<Error><Code>NotImplementedInBridge</Code><Message>' + esc(method + ' ' + url) + '</Message></Error>' };
+    } catch (e) {
+      rec.status = 400; rec.error = e.code;
+      var st = { NoSuchBucket: 404, NoSuchKey: 404, BucketAlreadyOwnedByYou: 409 }[e.code] || 400;
+      var x = xmlError(e.code, e.message, st); return x;
+    }
+  };
+}());
+
+const PY = `
+import json, time, io
+import boto3, botocore
+from botocore.httpsession import URLLib3Session
+from botocore.awsrequest import AWSResponse
+from botocore.config import Config
+from js import twinBridge
+
+class _Raw:
+    def __init__(self, data): self._d = data
+    def stream(self, *a, **k): yield self._d
+    def read(self, *a, **k): d, self._d = self._d, b''; return d
+
+def _send(self, request):
+    body = request.body
+    if hasattr(body, 'read'): body = body.read()
+    if isinstance(body, (bytes, bytearray)): body = body.decode('utf-8', 'replace')
+    headers = {k: (v.decode() if isinstance(v, bytes) else v) for k, v in request.headers.items()}
+    r = twinBridge(request.method, request.url, json.dumps(headers), body or '')
+    r = r.to_py()
+    return AWSResponse(request.url, int(r['status']), dict(r['headers']), _Raw(str(r['body']).encode('utf-8')))
+
+URLLib3Session.send = _send   # one line: the transport is the twin
+
+out = {'boto3': boto3.__version__, 'botocore': botocore.__version__, 'steps': []}
+def step(name, fn):
+    t = time.time()
+    try: res = fn(); out['steps'].append({'step': name, 'ok': True, 'ms': int((time.time()-t)*1000), 'result': res})
+    except Exception as e: out['steps'].append({'step': name, 'ok': False, 'ms': int((time.time()-t)*1000), 'error': type(e).__name__ + ': ' + str(e)[:200]})
+
+session = boto3.session.Session(aws_access_key_id='TWINACCESSKEY', aws_secret_access_key='twin-secret', aws_session_token='twin-token', region_name='eu-west-2')
+s3 = session.client('s3', endpoint_url='https://s3.eu-west-2.amazonaws.com', config=Config(s3={'addressing_style': 'path'}, request_checksum_calculation='when_required'))
+# without request_checksum_calculation='when_required', boto3 >= 1.36 sends put_object as aws-chunked with a CRC32 trailer, which a bridge must decode
+sts = session.client('sts')
+lam = session.client('lambda')
+
+step('sts.get_caller_identity', lambda: sts.get_caller_identity()['Arn'])
+step('s3.list_buckets (empty)', lambda: [b['Name'] for b in s3.list_buckets()['Buckets']])
+step('s3.create_bucket', lambda: s3.create_bucket(Bucket='boto3-in-the-browser', CreateBucketConfiguration={'LocationConstraint': 'eu-west-2'})['ResponseMetadata']['HTTPStatusCode'])
+step('s3.create_bucket again -> error', lambda: s3.create_bucket(Bucket='boto3-in-the-browser'))
+step('s3.put_object', lambda: s3.put_object(Bucket='boto3-in-the-browser', Key='hello/world.txt', Body=b'hello from boto3 in the browser', ContentType='text/plain')['ETag'])
+step('s3.list_objects_v2', lambda: [o['Key'] for o in s3.list_objects_v2(Bucket='boto3-in-the-browser', Prefix='hello/')['Contents']])
+step('s3.get_object', lambda: s3.get_object(Bucket='boto3-in-the-browser', Key='hello/world.txt')['Body'].read().decode())
+step('s3.get_object missing -> NoSuchKey', lambda: s3.get_object(Bucket='boto3-in-the-browser', Key='nope'))
+step('s3.list_buckets', lambda: [b['Name'] for b in s3.list_buckets()['Buckets']])
+step('lambda.list_functions', lambda: [f['FunctionName'] for f in lam.list_functions()['Functions']])
+step('lambda.get_function -> not in bridge', lambda: lam.get_function(FunctionName='x'))
+json.dumps(out)
+`;
+
+(async () => {
+  const log = (m) => { console.log('[exp] ' + m); document.getElementById('log').textContent += m + '\n'; };
+  const result = { timings: {} };
+  try {
+    log('loading pyodide'); let t = performance.now();
+    const pyodide = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/' });
+    result.timings.loadPyodideMs = Math.round(performance.now() - t); log('pyodide loaded ' + result.timings.loadPyodideMs + ' ms, python ' + pyodide.runPython('import sys; sys.version'));
+    result.python = pyodide.runPython('import sys; sys.version');
+    t = performance.now();
+    t = performance.now(); await pyodide.loadPackage(['ssl', 'hashlib']); result.timings.loadSslMs = Math.round(performance.now() - t); log('ssl + hashlib stdlib packages loaded (unvendored in Pyodide; botocore imports ssl through urllib3.util.ssl_)');
+    t = performance.now();
+    await pyodide.loadPackage('micropip'); log('micropip loaded');
+    const micropip = pyodide.pyimport('micropip');
+    await micropip.install('boto3'); log('boto3 installed');
+    result.timings.installBoto3Ms = Math.round(performance.now() - t); log('boto3 installed ' + result.timings.installBoto3Ms + ' ms');
+    result.packages = micropip.list().toString().split('\n').filter(l => /\|/.test(l)).slice(2).map(l => l.split('|').slice(0, 2).map(x => x.trim()).join(' '));
+    t = performance.now();
+    const out = pyodide.runPython(PY);
+    result.timings.scriptMs = Math.round(performance.now() - t);
+    result.run = JSON.parse(out);
+    result.bridge = window.__bridgeCalls;
+  } catch (e) { result.error = String(e && e.stack || e); log('ERROR ' + result.error); }
+  window.__result = result;
+  log(JSON.stringify(result, null, 2));
+})();
+</script>
+</body></html>

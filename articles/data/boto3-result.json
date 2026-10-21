@@ -1,0 +1,188 @@
+{
+  "timings": {
+    "loadPyodideMs": 2730,
+    "loadSslMs": 537,
+    "installBoto3Ms": 4399,
+    "scriptMs": 1723
+  },
+  "python": "3.13.2 (main, Sep 22 2025, 12:14:53) [Clang 21.0.0git (https:/github.com/llvm/llvm-project 2f05451198e2f222ec66cec489",
+  "packages": [
+    "hashlib 1.0.0",
+    "ssl 1.0.0",
+    "micropip 0.10.1",
+    "s3transfer 0.19.3",
+    "jmespath 1.1.0",
+    "botocore 1.43.116",
+    "boto3 1.43.116",
+    "six 1.17.0",
+    "urllib3 2.5.0",
+    "python-dateutil 2.9.0.post0",
+    "libopenssl 1.1.1w"
+  ],
+  "run": {
+    "boto3": "1.43.116",
+    "botocore": "1.43.116",
+    "steps": [
+      {
+        "step": "sts.get_caller_identity",
+        "ok": true,
+        "ms": 16,
+        "result": "arn:aws:sts::111111111111:assumed-role/twin/session"
+      },
+      {
+        "step": "s3.list_buckets (empty)",
+        "ok": true,
+        "ms": 8,
+        "result": []
+      },
+      {
+        "step": "s3.create_bucket",
+        "ok": true,
+        "ms": 8,
+        "result": 200
+      },
+      {
+        "step": "s3.create_bucket again -> error",
+        "ok": false,
+        "ms": 11,
+        "error": "BucketAlreadyOwnedByYou: An error occurred (BucketAlreadyOwnedByYou) when calling the CreateBucket operation: Your previous request to create the named bucket succeeded and you already own it."
+      },
+      {
+        "step": "s3.put_object",
+        "ok": true,
+        "ms": 11,
+        "result": "\"0c9c5ea71100b978fca305d8e16507a9\""
+      },
+      {
+        "step": "s3.list_objects_v2",
+        "ok": true,
+        "ms": 12,
+        "result": [
+          "hello/world.txt"
+        ]
+      },
+      {
+        "step": "s3.get_object",
+        "ok": true,
+        "ms": 7,
+        "result": "hello from boto3 in the browser"
+      },
+      {
+        "step": "s3.get_object missing -> NoSuchKey",
+        "ok": false,
+        "ms": 4,
+        "error": "NoSuchKey: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist."
+      },
+      {
+        "step": "s3.list_buckets",
+        "ok": true,
+        "ms": 5,
+        "result": [
+          "boto3-in-the-browser"
+        ]
+      },
+      {
+        "step": "lambda.list_functions",
+        "ok": true,
+        "ms": 6,
+        "result": []
+      },
+      {
+        "step": "lambda.get_function -> not in bridge",
+        "ok": false,
+        "ms": 12,
+        "error": "ClientError: An error occurred (501) when calling the GetFunction operation: <Error><Code>NotImplementedInBridge</Code><Message>GET https://lambda.eu-west-2.amazonaws.com/2015-03-31/functions/x</Message></Error>"
+      }
+    ]
+  },
+  "bridge": [
+    {
+      "method": "POST",
+      "url": "https://sts.eu-west-2.amazonaws.com/",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://s3.eu-west-2.amazonaws.com/",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 400,
+      "error": "BucketAlreadyOwnedByYou"
+    },
+    {
+      "method": "PUT",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser/hello/world.txt",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser?list-type=2&prefix=hello%2F&encoding-type=url",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser/hello/world.txt",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://s3.eu-west-2.amazonaws.com/boto3-in-the-browser/nope",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 400,
+      "error": "NoSuchKey"
+    },
+    {
+      "method": "GET",
+      "url": "https://s3.eu-west-2.amazonaws.com/",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://lambda.eu-west-2.amazonaws.com/2015-03-31/functions",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "https://lambda.eu-west-2.amazonaws.com/2015-03-31/functions/x",
+      "signed": true,
+      "auth": "AWS4-HMAC-SHA256 Credential=TWINACCESSKEY/20261021/eu-west-2",
+      "status": 501
+    }
+  ],
+  "wallMs": 10028,
+  "bytesByHost": {
+    "": 0,
+    "cdn.jsdelivr.net": 6653677,
+    "pypi.org": 1218404,
+    "files.pythonhosted.org": 16370036
+  },
+  "consoleErrors": [],
+  "note": "Measured 21 October 2026 in headless Chromium through a TLS-terminating egress proxy, from a file:// page, by run-boto3.js. Invented credentials; every call answered by the twin in the same page. Two other runs the same day took 14331 and 57820 ms wall with the same bytes."
+}

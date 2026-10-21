@@ -20,7 +20,7 @@
   <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.2.0</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
@@ -48,6 +48,15 @@
       </div>
     </div>
     <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
       <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
       <div class="sub">
       <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
@@ -68,6 +77,7 @@
   <div class="tablewrap"><table class="vers">
     <thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
     <tbody>
+      <tr><td class="vnum">v0.2.0</td><td>2026-10-21</td><td>The articles section, in the newsroom's format: <a href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a> (the build agent, in its own voice) and <a href="../articles/boto3-in-the-browser.html">boto3 in the browser</a> (Dinis Cruz, from a voice memo: the JavaScript SDK's maturity, boto3 under Pyodide against the twin, and the CORS measurement). The experiments and their data under <code>articles/data/</code>. The team page. Build-state rows updated for what was measured.</td></tr>
       <tr><td class="vnum">v0.1.0</td><td>2026-10-21</td><td>First release. The site: front page, design, workflow, naming, status, admin. The proof of concept: the interface (8 AWS-shaped namespaces, 42 operations, plus 3 twin-only), the vault backend on localStorage with commits and diff, the memory backend, the live backend's session slot, two deployment templates, the demo estate, the account graph, and the UI. 214 test assertions. Captured the naming decision of the same day: <code>aws.twin.sgit.ai</code>, repo <code>SGit-AI__Website__Twin__AWS</code>, hub <code>twins.sgit.ai</code>.</td></tr>
     </tbody>
   </table></div>
@@ -80,7 +90,7 @@
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.2.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
   </div>
   <div>
     <h4>The twin</h4>
@@ -102,6 +112,8 @@
   </div>
   <div>
     <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
     <a href="../admin/index.html">Admin &amp; engineering</a>
     <a href="../admin/versions.html">Release history</a>
     <a href="../llms.txt">llms.txt</a>

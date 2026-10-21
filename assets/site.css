@@ -339,3 +339,15 @@ pre.mermaid{background:var(--panel);border:1px solid var(--line);border-radius:1
 /* checklist tables */
 main.doc td.ok{color:var(--accent-dk);font-weight:700}
 main.doc td.todo{color:var(--warm);font-weight:700}
+
+/* ---------- articles ---------- */
+main.doc .byline{font-size:.85rem;color:var(--dim);margin:-.4rem 0 1rem}
+main.doc .byline .kind{font-style:italic}
+main.doc .chips{display:flex;flex-wrap:wrap;gap:.3rem;margin:0 0 1.2rem}
+.chip{font-family:var(--mono);font-size:.66rem;color:var(--dim);border:1px solid var(--line2);border-radius:99px;padding:.1rem .5rem;background:var(--panel)}
+figure.shot{margin:1.4rem 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.8rem;box-shadow:var(--shadow)}
+figure.shot img{display:block;width:100%;height:auto;border-radius:8px}
+figure.shot figcaption{font-size:.8rem;color:var(--dim);line-height:1.55;margin:.7rem .2rem 0}
+main.doc.article h2{margin-top:2.4rem}
+main.doc.article li{margin:.45rem 0}
+.card.acard h3{font-size:1rem;line-height:1.35}

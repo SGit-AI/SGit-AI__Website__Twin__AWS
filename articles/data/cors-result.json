@@ -1,0 +1,205 @@
+{
+  "measuredAt": "2026-10-21T12:18:40.535Z",
+  "origin": "http://localhost:8788",
+  "chromium": "141.0.7390.37",
+  "results": [
+    {
+      "name": "sts (global)",
+      "url": "https://sts.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"> <Error> ",
+        "ms": 360
+      },
+      "sdk": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"> <Error> ",
+        "ms": 76
+      }
+    },
+    {
+      "name": "sts (regional)",
+      "url": "https://sts.eu-west-2.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"> <Error> ",
+        "ms": 648
+      },
+      "sdk": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\"> <Error> ",
+        "ms": 229
+      }
+    },
+    {
+      "name": "s3 (service root)",
+      "url": "https://s3.eu-west-2.amazonaws.com/",
+      "method": "GET",
+      "simple": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 362
+      },
+      "sdk": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 119
+      }
+    },
+    {
+      "name": "s3 (a bucket, path style)",
+      "url": "https://s3.eu-west-2.amazonaws.com/aws-twin-cors-probe-does-not-exist/",
+      "method": "GET",
+      "simple": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 123
+      },
+      "sdk": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 116
+      }
+    },
+    {
+      "name": "lambda",
+      "url": "https://lambda.eu-west-2.amazonaws.com/2015-03-31/functions/",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "{\"message\":\"Missing Authentication Token\"}",
+        "ms": 661
+      },
+      "sdk": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "{\"message\":\"Signature expired: 20261021T120000Z is now earlier than 20261021T121",
+        "ms": 245
+      }
+    },
+    {
+      "name": "ec2",
+      "url": "https://ec2.eu-west-2.amazonaws.com/?Action=DescribeInstances&Version=2016-11-15",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 400,
+        "acao": null,
+        "bodyStart": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <Response><Errors><Error><Code>MissingPar",
+        "ms": 724
+      },
+      "sdk": {
+        "readable": true,
+        "status": 401,
+        "acao": null,
+        "bodyStart": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <Response><Errors><Error><Code>AuthFailur",
+        "ms": 539
+      }
+    },
+    {
+      "name": "iam",
+      "url": "https://iam.amazonaws.com/?Action=ListRoles&Version=2010-05-08",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://iam.amazonaws.com/doc/2010-05-08/\"> <Error> ",
+        "ms": 443
+      },
+      "sdk": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"https://iam.amazonaws.com/doc/2010-05-08/\"> <Error> ",
+        "ms": 87
+      }
+    },
+    {
+      "name": "logs",
+      "url": "https://logs.eu-west-2.amazonaws.com/",
+      "method": "POST",
+      "simple": {
+        "readable": true,
+        "status": 404,
+        "acao": null,
+        "bodyStart": "<UnknownOperationException/> ",
+        "ms": 599
+      },
+      "sdk": {
+        "readable": true,
+        "status": 400,
+        "acao": null,
+        "bodyStart": "{\"__type\":\"UnknownOperationException\"}",
+        "ms": 223
+      }
+    },
+    {
+      "name": "ce (cost explorer)",
+      "url": "https://ce.us-east-1.amazonaws.com/",
+      "method": "POST",
+      "simple": {
+        "readable": true,
+        "status": 400,
+        "acao": null,
+        "bodyStart": "{\"__type\":\"com.amazon.coral.service#UnknownOperationException\"}",
+        "ms": 137
+      },
+      "sdk": {
+        "readable": true,
+        "status": 400,
+        "acao": null,
+        "bodyStart": "{\"__type\":\"UnknownOperationException\"}",
+        "ms": 80
+      }
+    },
+    {
+      "name": "cloudformation",
+      "url": "https://cloudformation.eu-west-2.amazonaws.com/?Action=ListStacks&Version=2010-05-15",
+      "method": "GET",
+      "simple": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"http://cloudformation.amazonaws.com/doc/2010-05-15/\"> <E",
+        "ms": 689
+      },
+      "sdk": {
+        "readable": true,
+        "status": 403,
+        "acao": null,
+        "bodyStart": "<ErrorResponse xmlns=\"http://cloudformation.amazonaws.com/doc/2010-05-15/\"> <E",
+        "ms": 232
+      }
+    },
+    {
+      "name": "control: example.com (no CORS)",
+      "url": "https://example.com/",
+      "method": "GET",
+      "simple": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 389
+      },
+      "sdk": {
+        "readable": false,
+        "error": "Failed to fetch",
+        "ms": 43
+      }
+    }
+  ],
+  "note": "Unauthenticated. readable=true means the browser could read the status and body, which requires Access-Control-Allow-Origin from the server; the acao field is null even then because the browser does not expose that header to scripts. The control row (example.com) is blocked, showing the proxy added nothing."
+}

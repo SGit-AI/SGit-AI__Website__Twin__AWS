@@ -20,7 +20,7 @@
   <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="../admin/versions.html" title="Site release history">v0.1.0</a>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.2.0</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
@@ -45,6 +45,15 @@
       <a class="sl" href="../shipped/index.html">Built, and designed</a>
       <a class="sl" href="../shipped/index.html#next">What is next</a>
       <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
       </div>
     </div>
     <div class="ni ni-has">
@@ -137,7 +146,7 @@
   <p>Wiring it needs three things, and nothing on the consuming side:</p>
   <ol>
     <li><b>The SDK for JavaScript v3 clients</b> for the eight services, constructed per call from the session's three values, with the region from the client's scope. Released as a fixed, independent copy per site version, so the code that holds the session is a known thing.</li>
-    <li><b>A CORS measurement per service.</b> AWS's SDK guide says S3 buckets need a CORS configuration before a browser can call them, and that CORS applies to other services too. Which endpoints answer a browser is the first thing to measure, and the result is a table on this site. Where one does not, a small helper on the user's own machine, or an SG/Compute node, makes that call behind the same interface: a fourth backend, not a change to the consumers.</li>
+    <li><b>A CORS measurement per service.</b> Made on 2026-10-21, with no credentials: STS, Lambda, EC2, IAM, Logs, Cost Explorer and CloudFormation answer any origin with a preflight that allows the SDK's headers; S3 does not until the bucket has a CORS rule, which the deploy template can write when it creates the bucket. <a href="../articles/boto3-in-the-browser.html#cors">The table and the data →</a>. Where a service will not answer, a small helper on the user's own machine, or an SG/Compute node, makes that call behind the same interface: a fourth backend, not a change to the consumers.</li>
     <li><b>Results back into the vault.</b> A live read is a snapshot like any other: the response is written into the state document and committed, so the live backend and the vault backend are not alternatives but a pair.</li>
   </ol>
   <div class="note"><b>Where the credential lives.</b> The twin's interface never holds it. The live backend reads it from the session slot, which is sessionStorage in this PoC: the tab's lifetime, never written to disk by the browser the way localStorage is, with the expiry the user gave it (one to twelve hours). The slot refuses a session without a token, because a long-lived IAM user key is exactly what this design declines to hold. This is the resolution the naming page proposes for the hub's ruling: <a href="../naming/index.html#ruling">a twin can have a live backend; the credential belongs to the backend, not the twin</a>.</div>
@@ -180,7 +189,7 @@
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="../admin/versions.html">v0.1.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.2.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
   </div>
   <div>
     <h4>The twin</h4>
@@ -202,6 +211,8 @@
   </div>
   <div>
     <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
     <a href="../admin/index.html">Admin &amp; engineering</a>
     <a href="../admin/versions.html">Release history</a>
     <a href="../llms.txt">llms.txt</a>
