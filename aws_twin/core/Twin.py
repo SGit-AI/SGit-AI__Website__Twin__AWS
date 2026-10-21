@@ -10,6 +10,9 @@ Routing: the service comes from the SigV4 credential scope when the request is s
 (Credential=AKID/<date>/<region>/<service>/aws4_request), else from the host. Each
 service is sent to its route: 'twin' (answered here), 'live' (sent on to AWS by the hook,
 recorded), or 'replay' (answered from a recording). The default is twin for everything.
+A live route goes straight to AWS, or through the local relay (Twin__Relay.py) when live_relay is set:
+the relay holds no credentials and adds the CORS headers a browser needs for services, such as S3's
+ListBuckets, that do not answer a page.
 Services the twin does not have answer 501 NotImplemented with the operation named, so
 a gap is visible in the traffic, never a silent success."""
 import json
@@ -30,7 +33,7 @@ TWIN_CREDENTIALS = {'AWS_ACCESS_KEY_ID': 'TWINACCESSKEYID00000', 'AWS_SECRET_ACC
 class Twin:
     def __init__(self, vfs=None, account_id='111111111111', region='eu-west-2', routes=None, replay=None,
                  keep_bodies=False, endpoint_hosts=('localhost', '127.0.0.1', 'aws.twin.local'),
-                 role_name='twin', session_name='session', set_credentials=True):
+                 role_name='twin', session_name='session', set_credentials=True, live_relay=None):
         self.vfs               = vfs if vfs is not None else Vfs__Provider__Memory()
         self.account_id        = account_id
         self.region            = region
@@ -43,6 +46,7 @@ class Twin:
         self.traffic           = Twin__Traffic(keep_bodies=keep_bodies)
         self.services          = {'s3': S3__Twin(self), 'sts': STS__Twin(self)}
         self.set_credentials   = set_credentials
+        self.live_relay        = live_relay                            # e.g. http://127.0.0.1:4567: live calls go through Twin__Relay.py
         self._saved_send       = None
         self._saved_env        = {}
 
@@ -71,6 +75,16 @@ class Twin:
         m = re.search(rb'Action=([A-Za-z]+)', request.body[:200]) if request.body else None
         return m.group(1).decode() if m else 'Unknown'
 
+    def operation_name(self, request, service):
+        """Name the operation a request is, for a request the twin did not answer (live, replay): a
+        throwaway twin with an empty store dispatches it, which names it before it runs it."""
+        if service in self.services:
+            try:
+                return Twin(set_credentials=False).services[service].handle(request)[0]
+            except Exception:
+                pass
+        return self.operation_hint(request)
+
     def handle(self, request, route=None):
         """Answer one request from the twin (or a replay); 'live' is the hook's job."""
         started = time.time()
@@ -78,7 +92,7 @@ class Twin:
         route   = route or self.route_of(service)
         if route == 'replay' and self.replay is not None:
             response  = self.replay.handle(request)
-            operation = self.operation_hint(request)
+            operation = self.operation_name(request, service)
         elif service in self.services:
             operation, response = self.services[service].handle(request)
         else:
@@ -107,18 +121,24 @@ class Twin:
         original = URLLib3Session.send
 
         def send(session_self, prepared):
+            if hasattr(prepared.body, 'read'):                        # a stream can be read once: read it here, and give
+                prepared.body = prepared.body.read()                   # the same bytes to the record and to the send
             request = Twin__Request(prepared.method, prepared.url, dict(prepared.headers.items()), prepared.body)
             service = twin.service_of(request)
             if twin.route_of(service) == 'live':
                 started  = time.time()
-                if sys.platform == 'emscripten':                      # in a browser: botocore's sockets do not exist there
+                if twin.live_relay:                                    # through the local relay: CORS for any service
+                    from aws_twin.core.Twin__Browser_Http import send_via_relay
+                    response = send_via_relay(prepared, twin.live_relay)
+                elif sys.platform == 'emscripten':                    # in a browser: botocore's sockets do not exist there
                     from aws_twin.core.Twin__Browser_Http import send_from_browser
                     response = send_from_browser(prepared)
                 else:
                     response = original(session_self, prepared)
-                twin.traffic.record(request, Twin__Response(response.status_code, dict(response.headers.items()), response.content),
-                                    service, twin.operation_hint(request), 'live', started)
-                return response
+                content = response.content                              # reading it empties the raw stream, so give botocore a fresh one
+                twin.traffic.record(request, Twin__Response(response.status_code, dict(response.headers.items()), content),
+                                    service, twin.operation_name(request, service), 'live', started)
+                return to_botocore(prepared.url, Twin__Response(response.status_code, dict(response.headers.items()), content))
             return to_botocore(prepared.url, twin.handle(request))
 
         URLLib3Session.send = send

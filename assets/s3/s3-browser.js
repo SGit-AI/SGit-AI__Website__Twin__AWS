@@ -14,6 +14,16 @@ const REGIONS = ['eu-west-2', 'eu-west-1', 'eu-central-1', 'us-east-1', 'us-west
 const app = document.getElementById('s3-app');
 const pyLog = document.getElementById('s3-py');
 let browser = null, idb = null, flash = null, pyCalls = 0;
+let mode = 'twin', liveInfo = null;                                     // twin: the Python twin answers; live: the real account
+const SESSION_KEY = 'aws.twin/session', NAMED_KEY = 'aws.twin/live-buckets', RELAY_KEY = 'aws.twin/relay';
+const store = { get(k, d) { try { const v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+                set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* this tab only, or nowhere */ } } };
+function pastedSession() {
+  const s = store.get(SESSION_KEY, null);
+  if (!s || !s.sessionToken) return null;
+  s.expired = s.expiresAt && Date.parse(s.expiresAt) < Date.now();
+  return s;
+}
 const sel = new Set();
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,6 +42,7 @@ async function api(name, args = {}) {
   return out.result;
 }
 async function persist(changes) {
+  if (mode === 'live') return;                                          // live mode never writes the twin's store
   for (const c of changes) {
     if (c.op === 'write') await idb.writeFile(c.path, c.b64);
     else { try { await idb.deleteFile(c.path); } catch (e) { if (e.code !== 'ENOENT') throw e; } }
@@ -40,9 +51,10 @@ async function persist(changes) {
 function logCall(c) {
   pyCalls++;
   const ops = c.traffic.map(t => `<span class="op">${esc(t.service)}.${esc(t.operation)}</span> ${t.status < 400 ? `<span class="ok">${t.status}</span>` : `<span class="er">${t.status}</span>`}`).join(' · ');
-  const line = `<div><span class="d">${new Date().toISOString().slice(11, 19)}</span> <span class="py">${esc(c.python)}</span> <span class="d">${c.ms} ms →</span> ${ops || '<span class="d">no AWS call</span>'}${c.error ? ` <span class="er">${esc(c.error.code || c.error.type)}</span>` : ''}</div>`;
+  const where = c.mode === 'live' || (c.mode === undefined && mode === 'live') ? '<span class="er">live</span> ' : '<span class="ok">twin</span> ';
+  const line = `<div><span class="d">${new Date().toISOString().slice(11, 19)}</span> ${where}<span class="py">${esc(c.python)}</span> <span class="d">${c.ms} ms →</span> ${ops || '<span class="d">no AWS call</span>'}${c.error ? ` <span class="er">${esc(c.error.code || c.error.type)}</span>` : ''}</div>`;
   pyLog.insertAdjacentHTML('beforeend', line);
-  pyLog.querySelector('.h').textContent = `Python calls in this page · ${pyCalls} · each line is one method in aws_twin/web/S3__Browser.py and the AWS operations the twin answered`;
+  pyLog.querySelector('.h').textContent = `Python calls in this page · ${pyCalls} · each line is one method in aws_twin/web/S3__Browser.py, where it went (the twin, or live to the account), and the AWS operations it caused`;
   pyLog.scrollTop = pyLog.scrollHeight;
 }
 async function walkIdb(path, out) {
@@ -69,7 +81,8 @@ async function render() {
   let html;
   try { html = await (VIEWS[r.view] || VIEWS.buckets)(...r.parts); }
   catch (e) { html = `<div class="s3-flash err"><b>${esc(e.code || 'Error')}</b> ${esc(e.message)}${e.python ? `<br><code>${esc(e.python)}</code>` : ''}</div>`; }
-  app.innerHTML = (flash ? `<div class="s3-flash ${flash.kind}">${esc(flash.text)}${flash.code ? ` <code>${esc(flash.code)}</code>` : ''}</div>` : '') + html;
+  const banner = mode === 'live' ? `<div class="s3-live">LIVE · account ${esc(liveInfo.account)} · ${liveInfo.allow_writes ? 'writes allowed' : 'read-only'} · ${liveInfo.relay ? 'through the local relay' : 'straight from this browser'} · <a href="#/live">change</a></div>` : '';
+  app.innerHTML = banner + (flash ? `<div class="s3-flash ${flash.kind}">${esc(flash.text)}${flash.code ? ` <code>${esc(flash.code)}</code>` : ''}</div>` : '') + html;
   flash = null;
   bindDrop();
 }
@@ -79,16 +92,53 @@ const crumb = (...items) => `<div class="s3-crumb"><a href="#/buckets">S3</a><sp
 /* ── views ──────────────────────────────────────────────────────────────── */
 const VIEWS = {
   async buckets() {
-    const buckets = await api('buckets');
-    const rows = buckets.map(b => `<tr data-row="${esc(b.name)}"><td class="cb"><input type="radio" name="bucket" value="${esc(b.name)}"></td><td><a href="#/b/${enc(b.name)}">${esc(b.name)}</a></td><td>${esc(b.region)}</td><td>${esc(fmtDate(b.created))}</td></tr>`).join('');
-    return crumb(['Buckets']) + `<h1>Buckets</h1>
+    let buckets = [], blocked = null;
+    try { buckets = await api('buckets'); }
+    catch (e) { if (mode === 'live' && ['BrowserBlocked', 'AccessDenied'].includes(e.code)) blocked = e; else throw e; }
+    if (mode === 'live') {                                              // buckets opened by name, when listing is not possible
+      const named = store.get(NAMED_KEY, []).filter(n => !buckets.some(b => b.name === n.name));
+      buckets = buckets.concat(named.map(n => ({ name: n.name, region: n.region, created: '', named: true })));
+    }
+    const rows = buckets.map(b => `<tr data-row="${esc(b.name)}"><td class="cb"><input type="radio" name="bucket" value="${esc(b.name)}"></td><td><a href="#/b/${enc(b.name)}">${esc(b.name)}</a>${b.named ? ' <span class="s3-tag">opened by name</span>' : ''}</td><td>${esc(b.region)}</td><td>${b.created ? esc(fmtDate(b.created)) : '-'}</td></tr>`).join('');
+    const sub = mode === 'live'
+      ? `These are the real account's buckets (${esc(liveInfo.account)}), read with the session pasted on <a href="../sessions/index.html">the sessions page</a>${liveInfo.relay ? `, through the local relay at <code>${esc(liveInfo.relay)}</code>` : ', straight from this browser'}.`
+      : 'Buckets are containers for data stored in S3. These are answered by the twin in this page, kept in this browser.';
+    const blockedBox = blocked ? `<div class="s3-flash err"><b>${blocked.code === 'AccessDenied' ? 'This role may not list buckets.' : 'S3 does not let a page list buckets.'}</b> ${blocked.code === 'AccessDenied'
+        ? 'The session\'s permission set has no <code>s3:ListAllMyBuckets</code>. Open a bucket you may read by name below.'
+        : 'ListBuckets never answers a browser (CORS). <a href="#/live">Start the local relay</a> to list them, or open a bucket by name below; a bucket opens directly when it has a CORS rule for this site (<a href="../iam/index.html#cors">the rule</a>).'}</div>` : '';
+    const openForm = mode === 'live' ? `<form class="s3-form s3-inline" data-submit="open-bucket"><label>Open a bucket by name<input name="name" required placeholder="my-bucket" autocomplete="off"></label><div><button class="s3-btn" type="submit">Open</button></div></form>` : '';
+    return crumb(['Buckets']) + `<h1>Buckets</h1>` + blockedBox + `
       <div class="s3-panel"><div class="s3-panel-h"><h2>General purpose buckets <span class="count">(${buckets.length})</span></h2>
         <button class="s3-btn" data-act="copy-arn" disabled>Copy ARN</button><button class="s3-btn" data-act="empty-bucket" disabled>Empty</button><button class="s3-btn" data-act="delete-bucket" disabled>Delete</button><button class="s3-btn primary" data-act="nav" data-to="#/create-bucket">Create bucket</button></div>
-        <div class="s3-panel-sub">Buckets are containers for data stored in S3. These are answered by the twin in this page, kept in this browser.</div>
+        <div class="s3-panel-sub">${sub}</div>
+        ${openForm}
         <div class="s3-search"><input placeholder="Find buckets by name" data-filter="bucket"></div>
         ${buckets.length ? `<table class="s3-table"><thead><tr><th class="cb"></th><th>Name</th><th>AWS Region</th><th>Creation date</th></tr></thead><tbody>${rows}</tbody></table>`
+          : mode === 'live' ? `<div class="s3-empty"><b>No buckets to show</b>${blocked ? 'Open one by name above.' : 'This account has no buckets the session can see.'}</div>`
           : `<div class="s3-empty"><b>No buckets</b>You don't have any buckets.<br><br><button class="s3-btn" data-act="nav" data-to="#/create-bucket">Create bucket</button> <button class="s3-btn" data-act="seed">Create an example bucket</button></div>`}
       </div>`;
+  },
+
+  async live() {
+    const s = pastedSession();
+    const relay = store.get(RELAY_KEY, { url: 'http://127.0.0.1:4567', on: false });
+    const sess = s ? `<div class="s3-grid">
+        <div><div class="k">Account</div><div class="v">${esc(s.accountId)}</div></div>
+        <div><div class="k">Role</div><div class="v">${esc(s.role || '-')}</div></div>
+        <div><div class="k">Region</div><div class="v">${esc(s.region)}</div></div>
+        <div><div class="k">Expires</div><div class="v">${esc((s.expiresAt || '').replace('T', ' ').slice(0, 16))} UTC${s.expired ? ' <b style="color:#d91515">expired</b>' : ''}</div></div></div>`
+      : `<div class="s3-panel-sub">No session in this tab. Paste one on <a href="../sessions/index.html">the sessions page</a> (in this same tab: the session lives in the tab's sessionStorage), then come back here.</div>`;
+    return crumb(['Live session']) + `<h1>Live session</h1>
+      <div class="s3-panel"><div class="s3-panel-h"><h2>Now: ${mode === 'live' ? `<span class="s3-live-word">live</span>, account ${esc(liveInfo.account)}${liveInfo.allow_writes ? ', writes allowed' : ', read-only'}` : 'the twin in this page'}</h2>
+        ${mode === 'live' ? '<button class="s3-btn" data-act="go-twin">Back to the twin</button>' : ''}</div>
+        <div class="s3-panel-sub">Live mode sends the same Python calls (OSBot-AWS and boto3) to the real account instead of the twin. Each request is signed in this page with the pasted session and recorded in <a href="#/traffic">Traffic</a>. Nothing is stored: live mode keeps nothing in this browser except the bucket names you open.</div></div>
+      <div class="s3-panel"><div class="s3-panel-h"><h2>The session</h2></div>${sess}</div>
+      <form class="s3-panel s3-form" data-submit="go-live" style="padding-top:1rem">
+        <label><span><input type="checkbox" name="relay_on"${relay.on ? ' checked' : ''}> Use the local relay</span><small>S3 never lets a page list buckets, and answers a page for a bucket only when the bucket has a CORS rule for this site. The relay, on your machine, forwards the page's signed requests and adds the CORS headers. It holds no credentials and forwards only to *.amazonaws.com. The first time, the browser asks whether this site may reach apps on your device: allow it. Start the relay with:<br><code>curl -sO https://aws.twin.sgit.ai/aws_twin/core/Twin__Relay.py &amp;&amp; python3 Twin__Relay.py</code> · <a href="../how-it-works/index.html#relay">how it works</a></small></label>
+        <label>Relay address<input name="relay_url" value="${esc(relay.url)}"></label>
+        <label><span><input type="checkbox" name="allow_writes"> Allow writes</span><small>Off by default. Upload, create folder, rename, delete and bucket changes are refused in live mode until this is ticked, whatever the session's role allows.</small></label>
+        <div><button class="s3-btn primary" type="submit"${s && !s.expired ? '' : ' disabled'}>Go live</button></div>
+      </form>`;
   },
 
   async 'create-bucket'() {
@@ -204,7 +254,12 @@ function updateButtons() {
 }
 async function act(fn, ok) {
   try { const r = await fn(); if (ok) say(typeof ok === 'function' ? ok(r) : ok); }
-  catch (e) { say(`${e.code || 'Error'}: ${e.message}`, 'err', e.python); }
+  catch (e) {
+    let m = String(e.message || e);
+    if (m.includes('Traceback') || /^\w+(\.\w+)*Error: /.test(m)) m = m.trim().split('\n').pop().replace(/^[\w.]+: /, '');   // a Python error: its last line
+    const code = e.code || (/An error occurred \((\w+)\)/.exec(m) || [])[1] || 'Error';
+    say(`${code}: ${m.replace(/^An error occurred \(\w+\) when calling the (\w+) operation: /, '$1: ')}`, 'err', e.python);
+  }
   await render();
 }
 function saveBlob(name, bytes, type) {
@@ -220,7 +275,13 @@ async function uploadFiles(bucket, prefix, files) {
   }
   return n;
 }
+function setModePill() {
+  const pill = document.getElementById('s3-mode');
+  pill.textContent = mode === 'live' ? `live: account ${liveInfo.account}${liveInfo.allow_writes ? '' : ', read-only'}` : 'answered by the Python twin in this page, not by AWS';
+  pill.classList.toggle('live', mode === 'live');
+}
 const ACTIONS = {
+  'go-twin': () => act(async () => { browser.use_twin(); mode = 'twin'; liveInfo = null; setModePill(); go('#/buckets'); }, 'Back to the twin'),
   nav: el => go(el.dataset.to),
   refresh: () => render(),
   seed: () => act(async () => {
@@ -246,6 +307,32 @@ const ACTIONS = {
   reset: () => { if (confirm('Delete every bucket and object the twin holds in this browser?')) act(async () => { for (const b of await api('buckets')) { await api('empty_bucket', { name: b.name }); await api('delete_bucket', { name: b.name }); } }, 'Reset: no buckets left'); }
 };
 const SUBMITS = {
+  'go-live': (f, data) => act(async () => {
+    const s = pastedSession();
+    if (!s || s.expired) throw Object.assign(new Error('no unexpired session in this tab: paste one on the sessions page'), { code: 'NoSession' });
+    const relayOn = !!data.get('relay_on'), url = (data.get('relay_url') || '').trim();
+    store.set(RELAY_KEY, { url, on: relayOn });
+    if (relayOn) {                                                      // an ordinary request first: it checks the relay is running,
+      try {                                                             // and raises the browser's one-time local-network prompt
+        const h = await fetch(url.replace(/\/+$/, '') + '/health', { signal: AbortSignal.timeout(60000) });
+        if (!h.ok) throw new Error('HTTP ' + h.status);
+      } catch (e) {
+        throw Object.assign(new Error(`the local relay at ${url} did not answer (${e.message}). Start it with: python3 Twin__Relay.py, and allow this site to reach your device if the browser asks`), { code: 'RelayNotRunning' });
+      }
+    }
+    const t = performance.now();
+    const out = browser.use_live(JSON.stringify(s), relayOn ? url : '', !!data.get('allow_writes')).toJs({ dict_converter: Object.fromEntries });
+    mode = 'live'; liveInfo = out; setModePill();
+    logCall({ python: `S3__Browser().use_live(<session>, relay=${relayOn ? JSON.stringify(url) : 'None'}); sts.get_caller_identity()`, ms: Math.round(performance.now() - t), traffic: [{ service: 'sts', operation: 'GetCallerIdentity', status: 200 }] });
+    go('#/buckets');
+    return out;
+  }, r => `Live: ${r.arn}`),
+  'open-bucket': (f, data) => act(async () => {
+    const name = data.get('name').trim();
+    const r = await api('open_bucket', { name });
+    const named = store.get(NAMED_KEY, []).filter(n => n.name !== name); named.push(r); store.set(NAMED_KEY, named);
+    return r;
+  }, r => `Opened ${r.name}${r.region ? ' (' + r.region + ')' : ''}`),
   'create-bucket': (f, data) => act(async () => { await api('create_bucket', { name: data.get('name').trim(), region: data.get('region') }); if (data.get('versioning')) await api('set_versioning', { name: data.get('name').trim(), enabled: true }); go('#/buckets'); }, `Successfully created bucket "${data.get('name').trim()}"`),
   'upload-text': (f, data) => act(async () => { await api('upload', { bucket: f.dataset.bucket, key: f.dataset.prefix + data.get('name').trim(), b64: bytesToB64(new TextEncoder().encode(data.get('body') || '')), content_type: /\.md$/.test(data.get('name')) ? 'text/markdown' : /\.json$/.test(data.get('name')) ? 'application/json' : 'text/plain' }); go(`#/b/${enc(f.dataset.bucket)}/${f.dataset.prefix.split('/').filter(Boolean).map(enc).join('/')}`); }, 'Upload succeeded'),
   metadata: (f, data) => act(() => api('metadata', { bucket: f.dataset.bucket, key: f.dataset.key, metadata: Object.fromEntries((data.get('meta') || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => [l.split('=')[0].trim(), l.split('=').slice(1).join('=').trim()])) }), 'Metadata saved')
@@ -295,6 +382,7 @@ function bindDrop() {
     step(`twin started, ${started.files_restored} file(s) restored`);
     document.getElementById('s3-state').textContent = `Python ${py.runPython('import sys; sys.version.split()[0]')} · boto3 ${py.runPython('import boto3; boto3.__version__')} · OSBot-AWS ${py.runPython('from importlib.metadata import version; version("osbot-aws")')} · loaded in ${(py.twinTimings.total / 1000).toFixed(1)} s`;
     document.getElementById('s3-state').classList.add('ok');
+    setModePill();
     window.__s3Ready = true;
     window.addEventListener('hashchange', render);
     await render();

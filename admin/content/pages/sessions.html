@@ -53,7 +53,8 @@
   <pre class="shell"><span class="d"># the instance and the identity store (once)</span>
 INSTANCE=$(aws sso-admin list-instances --query 'Instances[0].InstanceArn' --output text)
 
-<span class="d"># a one-hour permission set with the policy above saved as twin-reader.json</span>
+<span class="d"># a one-hour permission set with the policy above</span>
+curl -sO https://aws.twin.sgit.ai/iam/policies/twin-reader.json
 PS=$(aws sso-admin create-permission-set --instance-arn $INSTANCE --name TwinReader \
        --session-duration PT1H --query 'PermissionSet.PermissionSetArn' --output text)
 aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE \
@@ -62,8 +63,9 @@ aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE \
 <span class="d"># assign a user to one account with it</span>
 aws sso-admin create-account-assignment --instance-arn $INSTANCE --permission-set-arn $PS \
        --target-type AWS_ACCOUNT --target-id 123456789012 \
-       --principal-type USER --principal-id &lt;user id from the identity store&gt;</pre>
+       --principal-type USER --principal-id $USER_ID      <span class="d"># the user id: see the IAM page</span></pre>
   <p>Then sign in to the portal, pick the account and <code>TwinReader</code>, choose <b>Access keys</b>, and paste above.</p>
+  <p><b>Narrower than that</b>, for S3 alone (list bucket names only, read one bucket, read one folder, read and write one bucket), with groups, a daily user, testing a policy before assigning it, and moving the administrator role out of daily reach: <a href="../iam/index.html">least privilege for the twin</a>.</p>
 
   <h2 id="better">3. Is there a better way than pasting? Measured</h2>
   <p>Pasting is the first method because it works today and the site never holds anything but one short session. The better ways all need AWS to answer a browser, so on 21 October 2026 each endpoint was asked, with no credentials, whether it would: a CORS preflight from <code>https://aws.twin.sgit.ai</code>, and the response headers.</p>
@@ -91,7 +93,7 @@ aws sso-admin create-account-assignment --instance-arn $INSTANCE --permission-se
     <li><b>One hour by default</b>, twelve at most, as the portal allows.</li>
     <li><b>Narrow roles.</b> A reading role and a deploying role, never more than the job.</li>
     <li><b>Never in a file, a commit or a page.</b> The site's validator fails the build on anything shaped like a key.</li>
-    <li><b>The code that holds it is versioned.</b> This page is part of site <code>v0.3.0</code>; the version in the nav names the copy you trusted.</li>
+    <li><b>The code that holds it is versioned.</b> The version in the nav names the copy of this page you trusted, and <a href="../admin/versions.html">the release history</a> says what changed in each.</li>
   </ul>
   <div class="pagenav"><a href="../s3/index.html">← The S3 browser</a><a href="../python/index.html">The Python twin →</a></div>
 </main>

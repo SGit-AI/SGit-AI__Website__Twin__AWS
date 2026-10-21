@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How it works: a live AWS session in a browser tab, step by step · aws.twin.sgit.ai</title>
+<meta name="description" content="What happens when the S3 browser goes live: Python in the tab, signing, the twin's hook and its routes, what CORS allows, the local relay and what it can see, the local-network prompt, the read-only guard, and how each was checked. With diagrams.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/how-it-works/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/how-it-works/index.html">
+<meta property="og:title" content="How it works: a live AWS session in a browser tab, step by step · aws.twin.sgit.ai">
+<meta property="og:description" content="What happens when the S3 browser goes live: Python in the tab, signing, the twin's hook and its routes, what CORS allows, the local relay and what it can see, the local-network prompt, the read-only guard, and how each was checked. With diagrams.">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.4.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../sessions/index.html">AWS sessions</a>
+      <a class="sl" href="../iam/index.html">Least privilege (IAM)</a>
+      <a class="sl" href="../how-it-works/index.html">How it works: live, step by step</a>
+      <a class="sl" href="../python/index.html">The Python twin</a>
+      <a class="sl" href="../python/tests.html">Run the tests here</a>
+      <a class="sl" href="../twin/index.html">The JavaScript proof of concept</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>
+      <a class="sl" href="../articles/the-twin-is-python-now.html">The twin is Python now</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../briefs/index.html">The briefs</a>
+      <a class="sl" href="../REALITY.md">Reality: what exists</a>
+      <a class="sl" href="../BRIEF-CORRECTIONS.md">Corrections</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / how it works</div>
+  <h1>How it works: a live AWS session in a browser tab, step by step</h1>
+  <p class="lead">When you paste a session, press <b>Go live</b> in the S3 browser and open a bucket, Python running inside the tab signs a request with your session, and either the browser sends it to AWS directly or a small program on your own machine passes it on. Nothing in between holds your secret key. This page takes each step in order: what runs where, which component makes which decision, what the browser allows and refuses, and what the local relay is and what it can see.</p>
+
+  <div class="flow six">
+    <div class="fb twin"><span class="lbl">1 · the tab</span><b>Python loads</b>Pyodide, boto3, OSBot-AWS and the twin, unpacked in the page</div>
+    <div class="fb"><span class="lbl">2 · the session</span><b>You paste one</b>kept in this tab's sessionStorage, for its hour</div>
+    <div class="fb twin"><span class="lbl">3 · botocore</span><b>Signs the call</b>SigV4, in the tab, with the secret key</div>
+    <div class="fb twin"><span class="lbl">4 · the hook</span><b>Picks a route</b>twin, live or replay, per service</div>
+    <div class="fb aws"><span class="lbl">5 · the wire</span><b>Direct, or via the relay</b>the browser's fetch, or 127.0.0.1:4567</div>
+    <div class="fb vault"><span class="lbl">6 · the answer</span><b>Parsed and recorded</b>the same dict boto3 always returns, plus a traffic line</div>
+  </div>
+
+  <h2 id="routes">1. One hook, three routes</h2>
+  <p>Everything starts from one decision, made in one place. The twin installs a hook inside botocore, the library under boto3 and OSBot-AWS, at the last point before a request leaves: after the request is built and <b>signed</b>, before it is sent. The hook reads which AWS service the request is for from its signature (the SigV4 credential scope, <code>Credential=AKID/20261021/eu-west-2/<b>s3</b>/aws4_request</code>), looks that service up in a route table, and sends the request one of three ways.</p>
+  <figure class="diagram" id="fig-three-routes"><img src="../assets/diagrams/three-routes.svg" alt="The three routes. The code above the hook is unchanged whichever is taken: boto3 and OSBot-AWS make the same calls against the twin and against the real account." loading="lazy"><figcaption>The three routes. The code above the hook is unchanged whichever is taken: boto3 and OSBot-AWS make the same calls against the twin and against the real account.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">flowchart LR
+  code[&quot;Your code&lt;br/&gt;boto3 · OSBot-AWS · the S3 browser&quot;] --&gt; hook[&quot;The twin&#x27;s hook&lt;br/&gt;inside botocore, after signing&quot;]
+  hook --&gt;|&quot;route = twin&quot;| twin[&quot;The Python twin&lt;br/&gt;answers S3 and STS&lt;br/&gt;from a virtual file system&quot;]
+  hook --&gt;|&quot;route = live, direct&quot;| cors{&quot;Does AWS allow&lt;br/&gt;this page&#x27;s origin?&quot;}
+  cors --&gt;|&quot;yes: STS, IAM, EC2, Lambda,&lt;br/&gt;a bucket with a CORS rule&quot;| aws[(&quot;Your AWS account&quot;)]
+  cors --&gt;|&quot;no: ListBuckets,&lt;br/&gt;a bucket without CORS&quot;| blocked[&quot;BrowserBlocked&lt;br/&gt;named, not a timeout&quot;]
+  hook --&gt;|&quot;route = live, relay&quot;| relay[&quot;Twin__Relay.py&lt;br/&gt;on 127.0.0.1:4567&quot;]
+  relay --&gt; aws
+  hook --&gt;|&quot;route = replay&quot;| rec[&quot;A recording&lt;br/&gt;of earlier traffic&quot;]
+  twin --&gt; vfs[(&quot;sg-vfs&lt;br/&gt;IndexedDB in the browser&lt;br/&gt;memory or disk in CI&quot;)]</pre></details></figure>
+  <ul>
+    <li><b>twin</b>: the Python twin answers, in AWS's own wire format, from a virtual file system. No network, no credentials. This is the default, and what CI uses.</li>
+    <li><b>live</b>: the request goes to AWS. In a browser, either <b>directly</b>, when AWS allows this page's origin, or <b>through the relay</b>, when it does not.</li>
+    <li><b>replay</b>: the answer comes from a recording of earlier traffic.</li>
+  </ul>
+  <p>Hooking <i>after</i> signing is the choice everything else rests on. The twin sees exactly the bytes AWS would see, so its answers are tested against real requests; and a live request needs nothing added to it, so the twin never handles your secret key beyond what botocore already does.</p>
+
+  <h2 id="python">2. Python in the tab</h2>
+  <p>The S3 browser's buttons are JavaScript; everything behind them is Python. On first use the page loads <a href="https://pyodide.org">Pyodide</a> 0.28.3 (CPython compiled to WebAssembly), installs pinned wheels from PyPI (boto3 1.43.116, osbot-utils 3.75.0, osbot-aws 2.39.10), and unpacks this site's <code>assets/py/aws_twin.zip</code>. About 25 MB the first time, then from the browser's cache. A button press becomes one call, <code>browser.call("list", {...})</code>, into <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/web/S3__Browser.py">S3__Browser.py</a>, which makes the same OSBot-AWS and boto3 calls a script on your laptop would.</p>
+  <figure class="diagram" id="fig-twin-route"><img src="../assets/diagrams/twin-route.svg" alt="The twin route, end to end: a button press, a boto3 call, signing, the hook, S3__Twin reading sg-vfs (IndexedDB in the browser), and S3&#x27;s own XML back to botocore, which parses it as if AWS had answered." loading="lazy"><figcaption>The twin route, end to end: a button press, a boto3 call, signing, the hook, S3__Twin reading sg-vfs (IndexedDB in the browser), and S3's own XML back to botocore, which parses it as if AWS had answered.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">sequenceDiagram
+  autonumber
+  participant B as S3 browser (JavaScript)
+  participant P as Python (Pyodide, in the tab)
+  participant C as boto3 / botocore
+  participant H as The twin&#x27;s hook
+  participant T as S3__Twin
+  participant V as sg-vfs (IndexedDB)
+  B-&gt;&gt;P: browser.call(&quot;list&quot;, bucket)
+  P-&gt;&gt;C: list_objects_v2(Bucket, Prefix, Delimiter)
+  C-&gt;&gt;C: serialise and sign (SigV4)
+  C-&gt;&gt;H: send(prepared request)
+  H-&gt;&gt;H: service from the signature scope: s3
+  H-&gt;&gt;T: dispatch on method, host, path, query
+  T-&gt;&gt;V: read the bucket&#x27;s entries
+  V--&gt;&gt;T: keys, sizes, etags
+  T--&gt;&gt;H: 200 and S3&#x27;s own XML
+  H--&gt;&gt;C: the response botocore expected
+  C--&gt;&gt;P: a parsed dict, as from AWS
+  P--&gt;&gt;B: JSON for the page, plus the traffic record</pre></details></figure>
+  <p>The same package runs under pytest in CI and in the page; one test suite runs in both (<a href="../python/tests.html">run it here</a>).</p>
+
+  <h2 id="session">3. Where the session lives</h2>
+  <p>The session you paste on <a href="../sessions/index.html">the sessions page</a> is kept in that tab's <code>sessionStorage</code> under <code>aws.twin/session</code>, with its expiry, and nowhere else: closing the tab removes it. <b>Go live</b> reads it from there (which is why it has to be the same tab), and hands it to Python, which sets it as the AWS environment variables of the Python inside the page and swaps the S3 browser's twin for one whose S3 and STS routes are <code>live</code>. Its first request is STS <code>GetCallerIdentity</code>, so the view can say which account and role it is now acting as. Live mode keeps nothing else, and nothing beyond the tab: the relay's address and the names of buckets you open by name, in the same sessionStorage. <b>Back to the twin</b> removes the session from Python again.</p>
+
+  <h2 id="direct">4. Live, directly: what the browser allows</h2>
+  <p>In a normal Python, botocore opens its own sockets. A browser tab has no sockets, so the live route sends the already-signed request through the browser instead: Pyodide's urllib3 turns it into a synchronous <code>XMLHttpRequest</code> (botocore is synchronous Python, so the call has to block). The browser then applies its own rule, CORS: a page may read an answer from another origin only if that origin says so. Because the request carries <code>authorization</code> and <code>x-amz-*</code> headers, the browser first asks permission with an <code>OPTIONS</code> preflight.</p>
+  <figure class="diagram" id="fig-live-direct"><img src="../assets/diagrams/live-direct.svg" alt="Live, direct. Whether AWS answers the preflight decides everything. When it does not, the browser hides the answer and Python sees status 0; the twin turns that into a named BrowserBlocked error saying why and what would fix it, rather than a timeout that looks like an outage." loading="lazy"><figcaption>Live, direct. Whether AWS answers the preflight decides everything. When it does not, the browser hides the answer and Python sees status 0; the twin turns that into a named BrowserBlocked error saying why and what would fix it, rather than a timeout that looks like an outage.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">sequenceDiagram
+  autonumber
+  participant P as Python in the tab
+  participant BR as The browser (Chromium)
+  participant A as AWS (sts or the bucket&#x27;s host)
+  P-&gt;&gt;P: botocore signs with the pasted session
+  P-&gt;&gt;BR: a synchronous XMLHttpRequest, headers as signed
+  BR-&gt;&gt;A: OPTIONS preflight: may aws.twin.sgit.ai send authorization, x-amz-*?
+  alt AWS allows the origin
+    A--&gt;&gt;BR: 200 with Access-Control-Allow-Origin
+    BR-&gt;&gt;A: the signed request
+    A--&gt;&gt;BR: the answer
+    BR--&gt;&gt;P: status, headers, body
+  else AWS does not allow it
+    A--&gt;&gt;BR: 403, or no CORS headers
+    BR--&gt;&gt;P: status 0: the browser hides the answer
+    P-&gt;&gt;P: raise BrowserBlocked, with the reason and the fix
+  end</pre></details></figure>
+  <p>Measured on 21 October 2026, with a preflight from <code>https://aws.twin.sgit.ai</code>:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Service</th><th>Answers a browser?</th><th>What that means here</th></tr></thead>
+    <tbody>
+      <tr><td>STS, IAM, EC2, Lambda, CloudWatch Logs, Cost Explorer, CloudFormation</td><td class="ok">yes, any origin</td><td>Direct works. The sessions page's check is STS, direct.</td></tr>
+      <tr><td>S3, a bucket with a CORS rule for this site</td><td class="ok">yes, that bucket</td><td>Direct works for that bucket. <a href="../iam/index.html#cors">The rule, and how to add it</a>.</td></tr>
+      <tr><td>S3, a bucket without one</td><td class="todo">no</td><td>Relay, or add the rule.</td></tr>
+      <tr><td>S3 ListBuckets (the service endpoint)</td><td class="todo">never</td><td>Relay. There is no setting that changes this.</td></tr>
+      <tr><td>The access portal's credentials API</td><td class="todo">no</td><td>Why sessions are pasted rather than fetched (<a href="../sessions/index.html#better">measured</a>).</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="relay">5. The local relay</h2>
+  <p>The relay exists for the two "no" rows that matter to S3: listing buckets, and buckets without a CORS rule. It is one Python file, <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/core/Twin__Relay.py">Twin__Relay.py</a>, under 200 lines, standard library only, so it can be read in full before it is run:</p>
+  <pre class="shell">curl -sO https://aws.twin.sgit.ai/aws_twin/core/Twin__Relay.py
+less Twin__Relay.py                    <span class="d"># read it first</span>
+python3 Twin__Relay.py                 <span class="d"># http://127.0.0.1:4567, for https://aws.twin.sgit.ai only; Ctrl+C to stop</span></pre>
+  <p>What it does is small. The page sends the signed request to the relay instead of to AWS, with the real AWS URL in an <code>x-twin-target</code> header. The relay checks two things, sends the request on to that URL unchanged, and returns AWS's answer with the CORS headers the browser wants. AWS checks the signature exactly as it would from anywhere else; to AWS the request simply comes from your machine.</p>
+  <figure class="diagram" id="fig-live-relay"><img src="../assets/diagrams/live-relay.svg" alt="Through the relay. The browser asks once per tab whether this site may reach a service on your own machine; the page triggers that question with a plain request to /health before anything is signed." loading="lazy"><figcaption>Through the relay. The browser asks once per tab whether this site may reach a service on your own machine; the page triggers that question with a plain request to /health before anything is signed.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">sequenceDiagram
+  autonumber
+  participant P as Python in the tab
+  participant BR as The browser
+  participant R as Twin__Relay.py (127.0.0.1:4567)
+  participant A as AWS (s3.amazonaws.com)
+  Note over BR,R: once per tab: the page fetches /health,&lt;br/&gt;the browser asks you to allow local network access
+  P-&gt;&gt;P: botocore signs ListBuckets with the pasted session
+  P-&gt;&gt;BR: the same method to the relay, x-twin-target = the real URL
+  BR-&gt;&gt;R: OPTIONS preflight, with Access-Control-Request-Private-Network
+  R--&gt;&gt;BR: 204: this origin only, private network allowed
+  BR-&gt;&gt;R: the signed request, unchanged
+  R-&gt;&gt;R: target is https://*.amazonaws.com? origin allowed?
+  R-&gt;&gt;A: the same method, path, headers and body
+  A--&gt;&gt;R: the answer (AWS checks the signature, not the relay)
+  R--&gt;&gt;BR: the answer, plus CORS headers
+  BR--&gt;&gt;P: status, headers, body</pre></details></figure>
+  <h3 id="relay-rules">Its rules</h3>
+  <ul>
+    <li><b>Only AWS, only HTTPS.</b> The target must match <code>https://…amazonaws.com</code>; anything else is refused with 400. It is not an open proxy.</li>
+    <li><b>Only this site.</b> It answers only requests whose <code>Origin</code> is <code>https://aws.twin.sgit.ai</code> (or origins you pass with <code>--origin</code>); others get 403 and no CORS headers.</li>
+    <li><b>Only this machine.</b> It listens on <code>127.0.0.1</code>, not on your network.</li>
+    <li><b>Nothing added, little kept.</b> It drops cookies, <code>Origin</code>, <code>Referer</code> and the browser's <code>sec-*</code> headers, forwards the rest as received, follows no redirects, and logs one line per request: method, host, path, status. Never a header or a body.</li>
+    <li><b>No credentials.</b> It has none to use, and its <code>/health</code> answer says so: <code>{"relay": "aws.twin", "forwards_to": "*.amazonaws.com", "holds_credentials": false}</code>. It uses <code>HTTPS_PROXY</code> if your machine needs one.</li>
+  </ul>
+  <h3 id="relay-sees">What it can see, precisely</h3>
+  <figure class="diagram" id="fig-what-the-relay-sees"><img src="../assets/diagrams/what-the-relay-sees.svg" alt="The secret access key stays in the tab: botocore uses it to compute one signature per request. What crosses to the relay, and to AWS, is the request, the access key id, the session token, and that signature." loading="lazy"><figcaption>The secret access key stays in the tab: botocore uses it to compute one signature per request. What crosses to the relay, and to AWS, is the request, the access key id, the session token, and that signature.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">flowchart LR
+  subgraph tab[&quot;The browser tab&quot;]
+    secret[&quot;Secret access key&lt;br/&gt;never leaves the tab&quot;]
+    sign[&quot;botocore signs&lt;br/&gt;one request&quot;]
+    secret --&gt; sign
+  end
+  subgraph wire[&quot;What crosses to the relay and AWS&quot;]
+    req[&quot;Method, URL, body&lt;br/&gt;access key id · session token&lt;br/&gt;a signature for this request only&quot;]
+  end
+  subgraph relay[&quot;Twin__Relay.py&quot;]
+    fwd[&quot;Checks origin and target&lt;br/&gt;forwards byte for byte&lt;br/&gt;logs method, host, path, status&quot;]
+  end
+  sign --&gt; req --&gt; fwd --&gt; aws[(&quot;AWS verifies&lt;br/&gt;the signature&quot;)]</pre></details></figure>
+  <p>A signature is valid for one request (method, path, query, the signed headers, the body's hash) and only for a few minutes around its timestamp. So the relay can forward what you sent, and could resend that same request within that window, but it cannot make a different request: that needs the secret key, which it never sees. This is why it runs on your machine, from code you can read, rather than as a service somewhere. And the session itself expires within the hour.</p>
+  <h3 id="lna">The browser's local-network prompt</h3>
+  <p>Chromium now asks before a public website reaches a service on your own machine or network (Local Network Access): the first time the page contacts the relay, a permission prompt appears, and the request waits until it is answered. Allow it for <code>aws.twin.sgit.ai</code>. The relay's preflight answer carries <code>Access-Control-Allow-Private-Network: true</code>, the header the browser looks for. One detail mattered: a synchronous request, the kind botocore makes, cannot raise that prompt, and simply hangs. So <b>Go live</b> first sends an ordinary asynchronous <code>fetch</code> to <code>/health</code>; the prompt appears then, before any signed request, and a relay that is not running is reported by name (<code>RelayNotRunning</code>).</p>
+
+  <h2 id="guard">6. Read-only unless you say otherwise</h2>
+  <p>A live session can do whatever its role allows. The S3 browser adds its own brake on top: in live mode, every operation that writes is refused before any request is made, unless <b>Allow writes</b> was ticked when you went live.</p>
+  <figure class="diagram" id="fig-read-only-guard"><img src="../assets/diagrams/read-only-guard.svg" alt="The read-only guard, in S3__Browser.call. A refused write shows as ReadOnly and never reaches AWS; with writes allowed, AWS&#x27;s own answer, for example AccessDenied from a least-privilege role, is shown by its code." loading="lazy"><figcaption>The read-only guard, in S3__Browser.call. A refused write shows as ReadOnly and never reaches AWS; with writes allowed, AWS's own answer, for example AccessDenied from a least-privilege role, is shown by its code.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">flowchart LR
+  btn[&quot;A button in the S3 browser&quot;] --&gt; callop[&quot;browser.call(op)&quot;]
+  callop --&gt; mode{&quot;Live mode?&quot;}
+  mode --&gt;|&quot;no: the twin&quot;| run[&quot;Run it&quot;]
+  mode --&gt;|&quot;yes&quot;| write{&quot;A write?&lt;br/&gt;create, upload, delete,&lt;br/&gt;copy, rename, metadata&quot;}
+  write --&gt;|&quot;no: a read&quot;| run
+  write --&gt;|&quot;yes&quot;| allowed{&quot;Writes allowed&lt;br/&gt;for this session?&quot;}
+  allowed --&gt;|&quot;no (the default)&quot;| refuse[&quot;ReadOnly&lt;br/&gt;refused before any request&quot;]
+  allowed --&gt;|&quot;yes, ticked&quot;| run
+  run --&gt; record[&quot;Recorded: operation,&lt;br/&gt;status, time, route&quot;]</pre></details></figure>
+  <p>The other brake is the role. A session from a narrow permission set (<a href="../iam/index.html">least privilege for the twin</a>) makes the twin's mistakes, and yours, small ones.</p>
+
+  <h2 id="traffic">7. Every request recorded</h2>
+  <p>Whatever the route, the hook records each request: the service and operation (<code>s3.ListObjectsV2</code>), the route (twin or live), the status, and the time taken. The S3 browser shows it under <b>Traffic</b>, and each log line says whether it was live. For live requests the twin still names the operation, by asking a throwaway twin to parse the request without answering it. The same records are what the replay route plays back: a recording of a live session becomes a test fixture that needs no account.</p>
+
+  <h2 id="verified">8. How this was checked</h2>
+  <ul>
+    <li><b>The whole live path, in a real browser, without an AWS account.</b> A headless Chromium test (Playwright) pastes a session; goes live directly, where real STS refuses the invented keys and the page says so by name; goes live through the relay; lists buckets, opens one, previews a file, is refused a delete in read-only mode, sees the signed calls in Traffic, opens a bucket by name, and goes back to the twin. Behind the relay, standing in for AWS, is the twin's own HTTP server. Ten checks, all passing.</li>
+    <li><b>The relay, under pytest</b>: its origin and target rules, its preflight, and boto3 through it (create a bucket, upload, download, list, a missing key, an upload without a content type) against the same stand-in. The requests arrive signed and unchanged. And the read-only guard: a delete refused with no request made, then let through once writes are allowed.</li>
+    <li><b>Real AWS, with invented keys</b> (opt-in, <code>AWS_TWIN_LIVE_TESTS=1</code>): STS GetCallerIdentity and S3 ListBuckets through the relay reach AWS and come back as <code>InvalidClientTokenId</code> and <code>InvalidAccessKeyId</code>: AWS read the signatures and rejected the keys, which is the round trip working.</li>
+    <li><b>A real session</b>: Dinis's own Identity Center session checked against AWS STS from the sessions page, account and role returned. Browsing a real account's buckets is the next thing to watch.</li>
+  </ul>
+  <h3 id="bugs">Three bugs the stand-in caught</h3>
+  <p>Each would have broken the first real use, and none shows up against the twin route alone:</p>
+  <ol>
+    <li><b>Uploads hung.</b> botocore sends some bodies with <code>Transfer-Encoding: chunked</code>; forwarded as is, with the body already whole, the far end waited for chunks that never came. The live path now drops the framing headers and lets the sender recompute them from the bytes.</li>
+    <li><b>Uploads arrived empty.</b> Recording the request read its body stream to the end, and the request then went out with nothing left to send. The body is now read once and kept as bytes.</li>
+    <li><b>Downloads failed with IncompleteRead.</b> Recording the response drained its stream before botocore read it. The live path now hands botocore a fresh response built from the recorded bytes.</li>
+  </ol>
+
+  <h2 id="files">The files</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>File</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/core/Twin.py">aws_twin/core/Twin.py</a></td><td>The hook, the route table, recording</td></tr>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/core/Twin__Browser_Http.py">aws_twin/core/Twin__Browser_Http.py</a></td><td>Sending a signed request from the browser, directly or to the relay; BrowserBlocked</td></tr>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/core/Twin__Relay.py">aws_twin/core/Twin__Relay.py</a></td><td>The relay</td></tr>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/web/S3__Browser.py">aws_twin/web/S3__Browser.py</a></td><td>The S3 browser's Python: every button, live mode, the read-only guard</td></tr>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/assets/s3/s3-browser.js">assets/s3/s3-browser.js</a></td><td>The S3 browser's page: views, the Live session form, the /health check</td></tr>
+      <tr><td><a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/tests/test_relay.py">tests/test_relay.py</a></td><td>The relay's tests</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small dim">The diagrams are Mermaid, rendered to SVG when the site is built (<code>admin/build/diagrams.js</code>), so this page loads no diagram script; each one's source is under it.</p>
+  <div class="pagenav"><a href="../iam/index.html">← Least privilege for the twin</a><a href="../s3/index.html">The S3 browser →</a></div>
+</main>
+
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.4.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../s3/index.html">S3 browser</a>
+    <a href="../sessions/index.html">AWS sessions</a>
+    <a href="../iam/index.html">Least privilege (IAM)</a>
+    <a href="../how-it-works/index.html">How it works</a>
+    <a href="../python/index.html">The Python twin</a>
+    <a href="../twin/index.html">JavaScript proof of concept</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../briefs/index.html">The briefs</a>
+    <a href="../REALITY.md">Reality</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

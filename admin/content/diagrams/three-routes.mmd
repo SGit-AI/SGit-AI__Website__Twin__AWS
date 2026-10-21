@@ -1,0 +1,10 @@
+flowchart LR
+  code["Your code<br/>boto3 · OSBot-AWS · the S3 browser"] --> hook["The twin's hook<br/>inside botocore, after signing"]
+  hook -->|"route = twin"| twin["The Python twin<br/>answers S3 and STS<br/>from a virtual file system"]
+  hook -->|"route = live, direct"| cors{"Does AWS allow<br/>this page's origin?"}
+  cors -->|"yes: STS, IAM, EC2, Lambda,<br/>a bucket with a CORS rule"| aws[("Your AWS account")]
+  cors -->|"no: ListBuckets,<br/>a bucket without CORS"| blocked["BrowserBlocked<br/>named, not a timeout"]
+  hook -->|"route = live, relay"| relay["Twin__Relay.py<br/>on 127.0.0.1:4567"]
+  relay --> aws
+  hook -->|"route = replay"| rec["A recording<br/>of earlier traffic"]
+  twin --> vfs[("sg-vfs<br/>IndexedDB in the browser<br/>memory or disk in CI")]

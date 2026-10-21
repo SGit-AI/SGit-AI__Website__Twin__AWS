@@ -5,16 +5,26 @@ that. Page bodies too long to keep inline live in admin/content/pages/<name>.htm
 
 Run: python3 admin/build/pages.py   (then python3 admin/build/articles.py, which reads the
 nav from index.html)"""
-import os, sys
+import html, os, re, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from md_twin import to_markdown
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAGES = os.path.join(ROOT, 'admin', 'content', 'pages')
 
+def diagram(name, caption, p='../'):
+    """A diagram: the SVG rendered at build time by diagrams.js, and its Mermaid source under it."""
+    with open(os.path.join(ROOT, 'admin', 'content', 'diagrams', name + '.mmd'), encoding='utf-8') as f:
+        src = html.escape(f.read().rstrip())
+    alt = html.escape(re.sub(r'<[^>]+>', '', caption), quote=True)
+    return (f'<figure class="diagram" id="fig-{name}"><img src="{p}assets/diagrams/{name}.svg" alt="{alt}" loading="lazy">'
+            f'<figcaption>{caption}</figcaption>'
+            f'<details><summary>The diagram\'s source (Mermaid)</summary><pre class="mermaid-src">{src}</pre></details></figure>')
+
 def body_of(name):
+    """A page body from admin/content/pages/; {{diagram NAME | caption}} becomes the figure."""
     with open(os.path.join(PAGES, name), encoding='utf-8') as f:
-        return f.read()
+        return re.sub(r'\{\{diagram (\S+) \| (.*?)\}\}', lambda m: diagram(m.group(1), m.group(2)), f.read())
 with open(os.path.join(ROOT, 'admin', 'build', 'version.txt')) as _f:
     VER = _f.read().strip()                         # the one place the version lives; CI tags from it
 DATE = '2026-10-21'
@@ -32,6 +42,8 @@ def nav(p):
       <div class="sub">
       <a class="sl" href="{p}s3/index.html">S3 browser (Python)</a>
       <a class="sl" href="{p}sessions/index.html">AWS sessions</a>
+      <a class="sl" href="{p}iam/index.html">Least privilege (IAM)</a>
+      <a class="sl" href="{p}how-it-works/index.html">How it works: live, step by step</a>
       <a class="sl" href="{p}python/index.html">The Python twin</a>
       <a class="sl" href="{p}python/tests.html">Run the tests here</a>
       <a class="sl" href="{p}twin/index.html">The JavaScript proof of concept</a>
@@ -59,6 +71,7 @@ def nav(p):
       <a class="nl" href="{p}articles/index.html">Articles<span class="caret">&#9662;</span></a>
       <div class="sub">
       <a class="sl" href="{p}articles/index.html">All articles</a>
+      <a class="sl" href="{p}articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>
       <a class="sl" href="{p}articles/the-twin-is-python-now.html">The twin is Python now</a>
       <a class="sl" href="{p}articles/boto3-in-the-browser.html">boto3 in the browser</a>
       <a class="sl" href="{p}articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
@@ -95,6 +108,8 @@ def footer(p):
     <h4>The twin</h4>
     <a href="{p}s3/index.html">S3 browser</a>
     <a href="{p}sessions/index.html">AWS sessions</a>
+    <a href="{p}iam/index.html">Least privilege (IAM)</a>
+    <a href="{p}how-it-works/index.html">How it works</a>
     <a href="{p}python/index.html">The Python twin</a>
     <a href="{p}twin/index.html">JavaScript proof of concept</a>
     <a href="{p}design/index.html">The design</a>
@@ -170,7 +185,7 @@ page('index.html',
   f'''<header class="hero">
   <div class="eyebrow">The AWS twin · one instance of the twin primitive · proposed and prototyped {DATE}</div>
   <h1>AWS from the vault,<br>twin first</h1>
-  <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. The live backend has its slot and not yet its wire.</p>
+  <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and <a href="s3/index.html#/live">the S3 browser, live</a>, directly or through a <a href="how-it-works/index.html#relay">local relay</a>. <a href="how-it-works/index.html">How it works</a>.</p>
   <div class="ctas">
     <a class="cta1" href="s3/index.html">Open the S3 browser →</a>
     <a class="cta2" href="sessions/index.html">AWS sessions →</a>
@@ -223,7 +238,8 @@ page('index.html',
         <tr><td><b>The live backend</b>: the session slot, the refusal naming the SDK command</td><td><span class="st st-design">slot built, wire designed</span></td><td>The same interface; every call says what it would send. Nothing calls AWS yet.</td></tr>
         <tr><td><b>CORS per service</b>, measured from a browser with no credentials</td><td><span class="st st-poc">measured</span></td><td>Seven of eight service families answer any origin with a preflight; S3 needs a bucket rule. <a href="articles/boto3-in-the-browser.html#cors">The table →</a></td></tr>
         <tr><td><b>boto3 in the browser</b> under Pyodide, against the twin</td><td><span class="st st-poc">experiment, ran</span></td><td>Eleven signed calls through one replaced transport function, ten seconds wall. <a href="articles/boto3-in-the-browser.html">The brief →</a></td></tr>
-        <tr><td>IAM Roles Anywhere from a browser, sgit sync of the vault document, a live call with a real session</td><td><span class="st st-no">not done</span></td><td>To test, to build, and to run. Export and import by file stand in for sync today.</td></tr>
+        <tr><td><b>Live, from the browser</b> (the Python twin): a real session checked against AWS STS; the S3 browser live, directly or through the local relay, read-only by default</td><td><span class="st st-poc">built; STS checked with a real session</span></td><td><a href="how-it-works/index.html">How it works</a>; real-account S3 browsing is the next test</td></tr>
+        <tr><td>IAM Roles Anywhere from a browser, sgit sync of the vault document</td><td><span class="st st-no">not done</span></td><td>To test and to build. Export and import by file stand in for sync today.</td></tr>
       </tbody>
     </table>
     <p class="cap">The honest headline: <b>the twin works in the browser against a vault; the wire to the live account is the next step, and nothing on this site pretends otherwise.</b> The article of {DATE} said "nothing here is built"; this site is the same day's first go, and <a href="articles/index.html">its articles</a> say what was done and what was measured.</p>
@@ -527,7 +543,9 @@ page('shipped/index.html',
       <tr><td><b>Deployment rehearsal</b>: two templates, accounts × regions, a commit of the result</td><td><span class="st st-poc">PoC, working</span></td><td>Deploy page; <code>createStack</code> runs the template through the interface; the Fargate template records the ECS gap on its stack</td></tr>
       <tr><td><b>The demo estate</b>: two illustrative accounts seeded through the interface</td><td><span class="st st-poc">PoC, working</span></td><td>Illustrative account ids and numbers; every seeded resource is a logged call</td></tr>
       <tr><td><b>The session slot</b>: paste in four formats, expiry, masking, refusal of long-lived keys</td><td><span class="st st-poc">PoC, working</span></td><td>Session page; parsing and refusals tested</td></tr>
-      <tr><td><b>The live backend</b>'s wire to AWS</td><td><span class="st st-design">designed</span></td><td>Refuses every call naming the SDK command; what wiring needs is <a href="../design/index.html#live">three listed things</a></td></tr>
+      <tr><td><b>The JavaScript proof of concept's live backend</b>: its wire to AWS</td><td><span class="st st-design">designed</span></td><td>Refuses every call naming the SDK command; what wiring needs is <a href="../design/index.html#live">three listed things</a>. The Python twin's live route, below, is what reaches AWS</td></tr>
+      <tr><td><b>The Python twin's live route</b> from the browser: a pasted session, signed in the page; direct where AWS allows the origin, through <a href="../how-it-works/index.html#relay">the local relay</a> where it does not</td><td><span class="st st-poc">built; STS checked with a real session</span></td><td>The sessions page's check returned a real account, role and user; the S3 browser live against a stand-in for AWS behind the relay, ten browser checks; real-account S3 browsing not yet done</td></tr>
+      <tr><td><b>Least-privilege guidance</b>: four S3 permission sets, the CLI, a policy simulator step</td><td><span class="st st-poc">written, commands checked</span></td><td><a href="../iam/index.html">The IAM page</a>; every command through the AWS CLI against the twin, in CI</td></tr>
       <tr><td><b>CORS per service</b> from a browser</td><td><span class="st st-poc">measured, no credentials</span></td><td>STS, Lambda, EC2, IAM, Logs, Cost Explorer and CloudFormation answer any origin with a preflight; S3 is blocked without a bucket rule. <a href="../articles/boto3-in-the-browser.html#cors">The table, with the data beside it</a></td></tr>
       <tr><td><b>boto3 under Pyodide</b> against the twin</td><td><span class="st st-poc">experiment, ran</span></td><td>Eleven SigV4-signed calls through one replaced transport, 10.0 s wall, 24.2 MB; one extra step, Pyodide's <code>ssl</code> package. <a href="../articles/boto3-in-the-browser.html#boto3">The brief</a></td></tr>
       <tr><td><b>IAM Roles Anywhere</b> from a browser</td><td><span class="st st-no">untested</span></td><td>The PKI path to explore</td></tr>
@@ -549,7 +567,7 @@ page('shipped/index.html',
   <h2 id="next">3. What is next, in order</h2>
   <ol>
     <li><b>Wire the live backend</b> with the SDK for JavaScript v3 for the eight services, as a fixed copy per site version, and write live reads back into the vault as commits.</li>
-    <li><b>Make one live call with a real session</b>, from a laptop browser, to confirm the CORS table from a reader's machine and not a container.</li>
+    <li><b>Browse a real account's buckets</b> with a list-only permission set, then read one bucket, directly and through the relay; record that session and replay it against the twin. (One live call with a real session was made on {DATE}: STS, from a laptop browser.)</li>
     <li><b>Sync the vault document</b> through sgit instead of a file, so a session's findings land in the user's vault and travel between devices.</li>
     <li><b>Add ECS</b> to the manifest so the Fargate template stops recording a gap, then Route 53, ECR and SSM as the first job needs them.</li>
     <li><b>Test Roles Anywhere</b> from a browser: a session from a certificate, as a backend.</li>
@@ -558,9 +576,9 @@ page('shipped/index.html',
 
   <h2 id="claims">4. What this does not claim</h2>
   <ul>
-    <li><b>Nothing here calls AWS.</b> The live backend is a slot. The service names identify interfaces the twin mirrors; AWS's real behaviour is richer and different in places, and the twin's behaviours are the ones a rehearsal needs, chosen, not derived from the service.</li>
+    <li><b>Nothing here calls AWS unless you give it a session.</b> The JavaScript proof of concept's live backend is a slot; the Python twin's live route calls AWS only with a session you paste, from your browser or your own machine, read-only in the S3 browser unless you allow writes. The service names identify interfaces the twin mirrors; AWS's real behaviour is richer and different in places, and the twin's behaviours are the ones a rehearsal needs, chosen, not derived from the service.</li>
     <li><b>The demo estate is illustrative.</b> The account ids are placeholders, the costs are invented round numbers, the AMI ids are not real. Nothing on this site is a measurement of an AWS account.</li>
-    <li><b>Browser access is not tested service by service.</b> S3 needs CORS; the rest is to measure.</li>
+    <li><b>Browser access was measured without credentials, per endpoint.</b> STS was then confirmed with a real session; S3 against a real bucket is still to do.</li>
     <li><b>The commit ids are not the vault's.</b> They are content hashes for the PoC; sgit's own hashes take over once the document is pushed.</li>
     <li><b>The templates are stand-ins.</b> They produce the shape of the SG/Send deployment, not the reviewed CloudFormation. The real templates are in beta on sgit.ai's AWS page.</li>
     <li><b>The quotes about sessions, CORS and Roles Anywhere are from AWS's documentation</b> as read on {DATE} for the article, and are paraphrased here; the article carries them verbatim.</li>
@@ -661,7 +679,7 @@ page('about/team.html',
 # ---------------------------------------------------------------- briefs/index.html
 page('briefs/index.html',
   'The briefs · aws.twin.sgit.ai',
-  'The four briefs that commissioned aws.twin.sgit.ai, published in full and as written, with their status, and where the corrections to them live.',
+  'The briefs that commissioned aws.twin.sgit.ai, published in full and as written, with their status, and where the corrections to them live.',
   f'''<main class="doc">
   <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / briefs</div>
   <h1>The briefs</h1>
@@ -672,6 +690,7 @@ page('briefs/index.html',
       <tr><td><a href="2026-10-21__01__the-first-go.md">1. The first go</a></td><td>2026-10-21</td><td>The site and a proof of concept from the newsroom article and the naming decision; the naming document in full</td><td><span class="st st-built">built, v0.1.0</span></td></tr>
       <tr><td><a href="2026-10-21__02__articles-and-the-research-brief.md">2. Try it, and write it up</a></td><td>2026-10-21</td><td>An article in the agent's name, a research brief in Dinis's: the JavaScript SDK's maturity, boto3 in the browser</td><td><span class="st st-built">built, v0.2.0</span></td></tr>
       <tr><td><a href="2026-10-21__03__the-python-twin.md">3. The Python twin</a></td><td>2026-10-21</td><td>An S3 browser on Python, OSBot-AWS in the browser, the same tests in CI and the browser, the twin in Python, AWS sessions</td><td><span class="st st-built">built, v0.3.0</span> <span class="st st-design">Cognito measured, not built</span></td></tr>
+      <tr><td><a href="2026-10-21__05__live-session-least-privilege-and-how-it-works.md">5. A live session, least privilege, how it works</a></td><td>2026-10-21</td><td>Browse real files with the pasted session in the S3 browser; guidance and commands for IAM Identity Center users that can only list buckets or read one; an article on the milestone; a step-by-step explanation of the relay, with diagrams</td><td><span class="st st-built">built, v0.4.0</span> <span class="st st-design">real-account S3 browse: next</span></td></tr>
       <tr><td><a href="2026-10-21__04__deploy-and-the-guidance.md">4. Deploy, and the guidance</a></td><td>2026-10-21</td><td>Deploy on push to <code>dev</code>; follow sgit.ai's guidance for <code>*.sgit.ai</code> sites, including tagging</td><td><span class="st st-built">built, v0.3.1</span></td></tr>
     </tbody>
   </table></div>
@@ -690,6 +709,7 @@ page('admin/versions.html',
   <div class="tablewrap"><table class="vers">
     <thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
     <tbody>
+      <tr><td class="vnum">v0.4.0</td><td>{DATE}</td><td>Live, from the browser. The S3 browser goes live with the session pasted in the same tab: directly where AWS allows this site's origin (a bucket with a CORS rule), and through <code>Twin__Relay.py</code>, a one-file local relay that holds no credentials, for what S3 never answers a browser, such as ListBuckets. Read-only unless writes are allowed. <a href="../how-it-works/index.html">How it works</a>, step by step, with diagrams written in Mermaid and rendered to SVG at build time. <a href="../iam/index.html">Least privilege for the twin</a>: four S3 permission sets as policy files, the IAM Identity Center CLI, checked through the AWS CLI in CI (<code>check_cli.py</code>). The article <a href="../articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>, after the first real session was checked against AWS STS from this site. Three live-path bugs fixed before any real use: chunked uploads hung, uploads went empty, downloads failed.</td></tr>
       <tr><td class="vnum">v0.3.1</td><td>{DATE}</td><td>Deployed, and tagged on every release. aws.twin.sgit.ai resolved to GitHub Pages and answered 404, because this repository had no deploy workflow; <code>deploy-pages.yml</code> is now the twins hub's own (validate, tag <code>vX.Y.Z</code> on every push to <code>dev</code>, publish), with this site's tests added to its gate. The version lives in <code>admin/build/version.txt</code>; <code>CNAME</code>, <code>assets/version.js</code>, a markdown twin for every page, <code>sitemap.xml</code> and <code>robots.txt</code> added; the four briefs published in full; <code>BRIEF-CORRECTIONS.md</code> and <code>REALITY.md</code> written; a release script that checks the live site. Also ships <code>308b2ae</code>, which committed the build scripts a <code>.gitignore</code> rule had hidden. Releases v0.1.0 to v0.3.0 were tagged by hand.</td></tr>
       <tr><td class="vnum">v0.3.0</td><td>{DATE}</td><td>The twin moves to Python. <code>aws_twin</code>: S3's REST-XML protocol and STS GetCallerIdentity over a Python mirror of sg-vfs, a botocore hook with twin, live and replay routes, a local endpoint, traffic recording. One test suite, run by pytest in CI and by Pyodide in the browser. OSBot-AWS runs against it unchanged in both. <a href="../s3/index.html">The S3 browser</a>, every button a Python call, persisted through sg-vfs's IndexedDB provider (vendored). <a href="../sessions/index.html">AWS sessions</a>: setup, paste and a live check, and measured CORS for the better methods. The article <a href="../articles/the-twin-is-python-now.html">The twin is Python now</a>. CI on GitHub Actions.</td></tr>
       <tr><td class="vnum">v0.2.0</td><td>{DATE}</td><td>The articles section, in the newsroom's format: <a href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a> (the build agent, in its own voice) and <a href="../articles/boto3-in-the-browser.html">boto3 in the browser</a> (Dinis Cruz, from a voice memo: the JavaScript SDK's maturity, boto3 under Pyodide against the twin, and the CORS measurement). The experiments and their data under <code>articles/data/</code>. The team page. Build-state rows updated for what was measured.</td></tr>
@@ -724,6 +744,17 @@ page('sessions/index.html',
   'Set up IAM Identity Center for one-hour sessions, paste one and check it against AWS from the browser, and the measured comparison of better ways: the SSO device code, Cognito identity pools, web identity and Roles Anywhere.',
   body_of('sessions.html'))
 
+# ---------------------------------------------------------------- iam/index.html
+page('iam/index.html',
+  'Least privilege for the twin: IAM Identity Center users, groups and permission sets · aws.twin.sgit.ai',
+  'Set up IAM Identity Center so the session you paste every day can only list bucket names, read one bucket, read one folder, or read and write one bucket: the policies as files, the CLI commands checked, testing before assigning, and moving the administrator role out of daily reach.',
+  body_of('iam.html'))
+
+# ---------------------------------------------------------------- how-it-works/index.html
+page('how-it-works/index.html',
+  'How it works: a live AWS session in a browser tab, step by step · aws.twin.sgit.ai',
+  'What happens when the S3 browser goes live: Python in the tab, signing, the twin\'s hook and its routes, what CORS allows, the local relay and what it can see, the local-network prompt, the read-only guard, and how each was checked. With diagrams.',
+  body_of('how-it-works.html'))
 
 # ---------------------------------------------------------------- assets/version.js
 # what the release script polls on the live site, and what a page can read at run time

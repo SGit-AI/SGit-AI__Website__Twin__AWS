@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant B as S3 browser (JavaScript)
+  participant P as Python (Pyodide, in the tab)
+  participant C as boto3 / botocore
+  participant H as The twin's hook
+  participant T as S3__Twin
+  participant V as sg-vfs (IndexedDB)
+  B->>P: browser.call("list", bucket)
+  P->>C: list_objects_v2(Bucket, Prefix, Delimiter)
+  C->>C: serialise and sign (SigV4)
+  C->>H: send(prepared request)
+  H->>H: service from the signature scope: s3
+  H->>T: dispatch on method, host, path, query
+  T->>V: read the bucket's entries
+  V-->>T: keys, sizes, etags
+  T-->>H: 200 and S3's own XML
+  H-->>C: the response botocore expected
+  C-->>P: a parsed dict, as from AWS
+  P-->>B: JSON for the page, plus the traffic record

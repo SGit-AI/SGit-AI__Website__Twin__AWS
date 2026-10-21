@@ -1,0 +1,10 @@
+flowchart LR
+  btn["A button in the S3 browser"] --> callop["browser.call(op)"]
+  callop --> mode{"Live mode?"}
+  mode -->|"no: the twin"| run["Run it"]
+  mode -->|"yes"| write{"A write?<br/>create, upload, delete,<br/>copy, rename, metadata"}
+  write -->|"no: a read"| run
+  write -->|"yes"| allowed{"Writes allowed<br/>for this session?"}
+  allowed -->|"no (the default)"| refuse["ReadOnly<br/>refused before any request"]
+  allowed -->|"yes, ticked"| run
+  run --> record["Recorded: operation,<br/>status, time, route"]

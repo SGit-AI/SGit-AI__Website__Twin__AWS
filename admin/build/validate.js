@@ -140,6 +140,15 @@ files.forEach(function (f) {
   if (sec) fail(name, 'looks like an AWS secret access key assignment');
 });
 
+/* the diagrams: every Mermaid source has its rendered SVG, stamped with the source's hash (node admin/build/diagrams.js) */
+var DIAG = path.join(ROOT, 'admin/content/diagrams');
+if (fs.existsSync(DIAG)) fs.readdirSync(DIAG).filter(function (f) { return /\.mmd$/.test(f); }).forEach(function (f) {
+  var svg = path.join(ROOT, 'assets/diagrams', f.replace(/\.mmd$/, '.svg'));
+  var want = require('crypto').createHash('sha256').update(fs.readFileSync(path.join(DIAG, f), 'utf8')).digest('hex').slice(0, 16);
+  if (!fs.existsSync(svg)) fail('admin/content/diagrams/' + f, 'not rendered (node admin/build/diagrams.js)');
+  else if (fs.readFileSync(svg, 'utf8').indexOf('data-source-sha256="' + want + '"') < 0) fail(rel(svg), 'stale: its source changed since it was rendered (node admin/build/diagrams.js)');
+});
+
 /* the scripts the twin page loads must parse in Node too (they are UMD on purpose) */
 ['assets/twin/interface.js', 'assets/twin/vault.js', 'assets/twin/templates.js'].forEach(function (p) {
   try { require(path.join(ROOT, p)); } catch (e) { fail(p, 'does not load in Node: ' + e.message); }

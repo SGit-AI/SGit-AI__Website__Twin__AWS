@@ -1,10 +1,10 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/index.html, generated from the same source by admin/build/pages.py; site v0.3.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/index.html, generated from the same source by admin/build/pages.py; site v0.4.0; content CC BY 4.0 -->
 
 The AWS twin · one instance of the twin primitive · proposed and prototyped 2026-10-21
 
 # AWS from the vault, twin first
 
-An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the **same interface** as a second backend, and what you built works against the live account. **This site holds the proof of concept**: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. The live backend has its slot and not yet its wire.
+An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the **same interface** as a second backend, and what you built works against the live account. **This site holds the proof of concept**: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and [the S3 browser, live](s3/index.md#/live), directly or through a [local relay](how-it-works/index.md#relay). [How it works](how-it-works/index.md).
 
  [Open the S3 browser →](s3/index.md) [AWS sessions →](sessions/index.md) [The design →](design/index.md) [The workflow →](workflow/index.md)
 
@@ -76,7 +76,8 @@ A site about a twin owes the reader its build state before anything else. Here i
 | **The live backend**: the session slot, the refusal naming the SDK command | slot built, wire designed | The same interface; every call says what it would send. Nothing calls AWS yet. |
 | **CORS per service**, measured from a browser with no credentials | measured | Seven of eight service families answer any origin with a preflight; S3 needs a bucket rule. [The table →](articles/boto3-in-the-browser.md#cors) |
 | **boto3 in the browser** under Pyodide, against the twin | experiment, ran | Eleven signed calls through one replaced transport function, ten seconds wall. [The brief →](articles/boto3-in-the-browser.md) |
-| IAM Roles Anywhere from a browser, sgit sync of the vault document, a live call with a real session | not done | To test, to build, and to run. Export and import by file stand in for sync today. |
+| **Live, from the browser** (the Python twin): a real session checked against AWS STS; the S3 browser live, directly or through the local relay, read-only by default | built; STS checked with a real session | [How it works](how-it-works/index.md); real-account S3 browsing is the next test |
+| IAM Roles Anywhere from a browser, sgit sync of the vault document | not done | To test and to build. Export and import by file stand in for sync today. |
 
 The honest headline: **the twin works in the browser against a vault; the wire to the live account is the next step, and nothing on this site pretends otherwise.** The article of 2026-10-21 said "nothing here is built"; this site is the same day's first go, and [its articles](articles/index.md) say what was done and what was measured.
 

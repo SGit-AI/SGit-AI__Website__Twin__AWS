@@ -49,7 +49,7 @@ class _Md(HTMLParser):
             self.emit('\n' + '  ' * (len(self.lists) - 1) + ('- ' if kind[0] == 'ul' else f'{kind[1]}. '))
         elif tag == 'pre':
             self.pre += 1
-            self.emit('\n\n```\n')
+            self.emit('\n\n```' + ('mermaid' if 'mermaid-src' in (a.get('class') or '') else '') + '\n')
         elif tag == 'code' and not self.pre:
             self.emit('`')
         elif tag in ('b', 'strong'):

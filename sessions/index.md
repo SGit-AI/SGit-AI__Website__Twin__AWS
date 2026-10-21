@@ -1,4 +1,4 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/sessions/index.html, generated from the same source by admin/build/pages.py; site v0.3.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/sessions/index.html, generated from the same source by admin/build/pages.py; site v0.4.0; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / sessions
 
@@ -57,7 +57,8 @@ Once per organisation, by someone with administrator access to the management ac
 # the instance and the identity store (once)
 INSTANCE=$(aws sso-admin list-instances --query 'Instances[0].InstanceArn' --output text)
 
-# a one-hour permission set with the policy above saved as twin-reader.json
+# a one-hour permission set with the policy above
+curl -sO https://aws.twin.sgit.ai/iam/policies/twin-reader.json
 PS=$(aws sso-admin create-permission-set --instance-arn $INSTANCE --name TwinReader \
        --session-duration PT1H --query 'PermissionSet.PermissionSetArn' --output text)
 aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE \
@@ -66,10 +67,12 @@ aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE \
 # assign a user to one account with it
 aws sso-admin create-account-assignment --instance-arn $INSTANCE --permission-set-arn $PS \
        --target-type AWS_ACCOUNT --target-id 123456789012 \
-       --principal-type USER --principal-id <user id from the identity store>
+       --principal-type USER --principal-id $USER_ID      # the user id: see the IAM page
 ```
 
 Then sign in to the portal, pick the account and `TwinReader`, choose **Access keys**, and paste above.
+
+**Narrower than that**, for S3 alone (list bucket names only, read one bucket, read one folder, read and write one bucket), with groups, a daily user, testing a policy before assigning it, and moving the administrator role out of daily reach: [least privilege for the twin](../iam/index.md).
 
 ## 3. Is there a better way than pasting? Measured
 
@@ -97,7 +100,7 @@ The plan, in order: paste (built), then a Cognito identity pool with one role pe
 - **One hour by default**, twelve at most, as the portal allows.
 - **Narrow roles.** A reading role and a deploying role, never more than the job.
 - **Never in a file, a commit or a page.** The site's validator fails the build on anything shaped like a key.
-- **The code that holds it is versioned.** This page is part of site `v0.3.0`; the version in the nav names the copy you trusted.
+- **The code that holds it is versioned.** The version in the nav names the copy of this page you trusted, and [the release history](../admin/versions.md) says what changed in each.
 
 [← The S3 browser](../s3/index.md)[The Python twin →](../python/index.md)
 

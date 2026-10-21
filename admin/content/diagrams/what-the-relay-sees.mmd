@@ -1,0 +1,13 @@
+flowchart LR
+  subgraph tab["The browser tab"]
+    secret["Secret access key<br/>never leaves the tab"]
+    sign["botocore signs<br/>one request"]
+    secret --> sign
+  end
+  subgraph wire["What crosses to the relay and AWS"]
+    req["Method, URL, body<br/>access key id · session token<br/>a signature for this request only"]
+  end
+  subgraph relay["Twin__Relay.py"]
+    fwd["Checks origin and target<br/>forwards byte for byte<br/>logs method, host, path, status"]
+  end
+  sign --> req --> fwd --> aws[("AWS verifies<br/>the signature")]

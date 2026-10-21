@@ -1,0 +1,18 @@
+sequenceDiagram
+  autonumber
+  participant P as Python in the tab
+  participant BR as The browser (Chromium)
+  participant A as AWS (sts or the bucket's host)
+  P->>P: botocore signs with the pasted session
+  P->>BR: a synchronous XMLHttpRequest, headers as signed
+  BR->>A: OPTIONS preflight: may aws.twin.sgit.ai send authorization, x-amz-*?
+  alt AWS allows the origin
+    A-->>BR: 200 with Access-Control-Allow-Origin
+    BR->>A: the signed request
+    A-->>BR: the answer
+    BR-->>P: status, headers, body
+  else AWS does not allow it
+    A-->>BR: 403, or no CORS headers
+    BR-->>P: status 0: the browser hides the answer
+    P->>P: raise BrowserBlocked, with the reason and the fix
+  end

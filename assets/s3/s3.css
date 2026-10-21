@@ -73,3 +73,12 @@
 .s3-py .ok{color:var(--term-green)}
 .s3-py .er{color:var(--term-red)}
 .s3-py .d{color:var(--term-dim)}
+/* live mode */
+.s3-live{background:#d91515;color:#fff;font-weight:700;font-size:.82rem;letter-spacing:.02em;border-radius:8px;padding:.45rem .8rem;margin:0 0 .8rem}
+.s3-live a{color:#fff;text-decoration:underline}
+.s3-top a.pill{color:#d1d5db;text-decoration:none}
+.s3-top .pill.live{border-color:#ff8a80;color:#fff;background:#b3261e}
+.s3-live-word{color:#d91515;text-transform:uppercase}
+.s3-tag{font-size:.7rem;color:var(--s3-muted);border:1px solid var(--s3-line);border-radius:99px;padding:0 .4rem;margin-left:.3rem}
+.s3-inline{flex-direction:row;align-items:flex-end;gap:.6rem;padding-bottom:.6rem}
+.s3-inline label{flex:1 1 16rem}

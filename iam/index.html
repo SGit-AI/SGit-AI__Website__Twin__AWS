@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Least privilege for the twin: IAM Identity Center users, groups and permission sets · aws.twin.sgit.ai</title>
+<meta name="description" content="Set up IAM Identity Center so the session you paste every day can only list bucket names, read one bucket, read one folder, or read and write one bucket: the policies as files, the CLI commands checked, testing before assigning, and moving the administrator role out of daily reach.">
+<link rel="canonical" href="https://aws.twin.sgit.ai/iam/index.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/iam/index.html">
+<meta property="og:title" content="Least privilege for the twin: IAM Identity Center users, groups and permission sets · aws.twin.sgit.ai">
+<meta property="og:description" content="Set up IAM Identity Center so the session you paste every day can only list bucket names, read one bucket, read one folder, or read and write one bucket: the policies as files, the CLI commands checked, testing before assigning, and moving the administrator role out of daily reach.">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="index.md" title="This page as markdown">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.4.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../sessions/index.html">AWS sessions</a>
+      <a class="sl" href="../iam/index.html">Least privilege (IAM)</a>
+      <a class="sl" href="../how-it-works/index.html">How it works: live, step by step</a>
+      <a class="sl" href="../python/index.html">The Python twin</a>
+      <a class="sl" href="../python/tests.html">Run the tests here</a>
+      <a class="sl" href="../twin/index.html">The JavaScript proof of concept</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>
+      <a class="sl" href="../articles/the-twin-is-python-now.html">The twin is Python now</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../briefs/index.html">The briefs</a>
+      <a class="sl" href="../REALITY.md">Reality: what exists</a>
+      <a class="sl" href="../BRIEF-CORRECTIONS.md">Corrections</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / iam</div>
+  <h1>Least privilege for the twin: stop signing in to do everything</h1>
+  <p class="lead">The live S3 browser needs a session. It does not need an administrator's. This page sets up IAM Identity Center so that the session you paste every day can do one narrow thing: list bucket names and nothing more, read one bucket, read one folder, or read and write one bucket. The administrator role stays available for administration, behind its own sign-in. Every command below was run through the AWS CLI's own parameter checks before it was published, and every policy is a file you can read and download.</p>
+
+  <div class="note"><b>The one idea.</b> In IAM Identity Center the power is not in the user you sign in as. It is in the <b>role you pick</b> in the access portal after signing in: each <i>permission set</i> assigned to you for an account shows up there as a role, and the session you copy carries that role's permissions and nothing else. So the fix has two halves: give yourself narrow permission sets and pick them by default, then move the administrator permission set to a separate sign-in so that a daily session cannot reach it.</div>
+
+  <h2 id="model">1. The model, in one picture</h2>
+  <figure class="diagram" id="fig-identity-center-model"><img src="../assets/diagrams/identity-center-model.svg" alt="IAM Identity Center: a user belongs to groups; an assignment joins a group, an account and a permission set; Identity Center creates a role in the account for it, named AWSReservedSSO_&amp;lt;permission set&amp;gt;_&amp;lt;hash&amp;gt;; the portal turns that role into a one-hour session; the session is what you paste here." loading="lazy"><figcaption>IAM Identity Center: a user belongs to groups; an assignment joins a group, an account and a permission set; Identity Center creates a role in the account for it, named <code>AWSReservedSSO_&lt;permission set&gt;_&lt;hash&gt;</code>; the portal turns that role into a one-hour session; the session is what you paste here.</figcaption><details><summary>The diagram's source (Mermaid)</summary><pre class="mermaid-src">flowchart LR
+  user[&quot;A user&lt;br/&gt;you sign in as this&quot;] --&gt; group[&quot;A group&lt;br/&gt;e.g. s3-readers&quot;]
+  group --&gt; assign[&quot;An assignment&lt;br/&gt;group + account + permission set&quot;]
+  ps[&quot;A permission set&lt;br/&gt;a policy and a session length&quot;] --&gt; assign
+  assign --&gt; role[&quot;A role in the account&lt;br/&gt;AWSReservedSSO_name_hash&quot;]
+  role --&gt; portal[&quot;The access portal&lt;br/&gt;pick account, then role&quot;]
+  portal --&gt; session[&quot;A session&lt;br/&gt;key id, secret, token&lt;br/&gt;expires in 1 hour&quot;]
+  session --&gt; twin[&quot;Paste into aws.twin&lt;br/&gt;sessions, then S3 browser&quot;]</pre></details></figure>
+  <ul>
+    <li><b>Users and groups</b> live in the identity store (the built-in directory, or an external IdP synced into it).</li>
+    <li><b>A permission set</b> is a template: one inline policy and/or AWS managed policies, plus a session length. Nothing exists in any account until it is assigned.</li>
+    <li><b>An assignment</b> is the triple <i>principal + account + permission set</i>. Assign to groups, not users: moving a person between groups is then the only thing you ever change.</li>
+    <li><b>The role</b> Identity Center creates in the account is named after the permission set. When you check a session on <a href="../sessions/index.html">the sessions page</a>, its ARN shows which one you picked: <code>arn:aws:sts::ACCOUNT:assumed-role/AWSReservedSSO_S3-Read-One-Bucket_…/you</code>.</li>
+  </ul>
+
+  <h2 id="recipes">2. Four recipes for S3</h2>
+  <p>Each is an inline policy for a permission set. Replace <code>BUCKET_NAME</code> (and <code>FOLDER</code>) with yours; the commands in section 3 do that with <code>sed</code>.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Permission set</th><th>Policy</th><th>Can</th><th>Cannot</th></tr></thead>
+    <tbody>
+      <tr><td><b>S3-List-Bucket-Names</b></td><td><a href="policies/s3-list-bucket-names.json">s3-list-bucket-names.json</a></td><td>See every bucket's name and region</td><td>List any bucket's contents, read any object, change anything</td></tr>
+      <tr><td><b>S3-Read-One-Bucket</b></td><td><a href="policies/s3-read-one-bucket.json">s3-read-one-bucket.json</a></td><td>See bucket names; list and read every object in <code>BUCKET_NAME</code></td><td>Open any other bucket; write, delete, or change the bucket</td></tr>
+      <tr><td><b>S3-Read-One-Folder</b></td><td><a href="policies/s3-read-one-folder.json">s3-read-one-folder.json</a></td><td>See bucket names; list the bucket's top level and everything under <code>FOLDER/</code>; read objects under <code>FOLDER/</code></td><td>List or read any other folder; write anything</td></tr>
+      <tr><td><b>S3-Read-Write-One-Bucket</b></td><td><a href="policies/s3-read-write-one-bucket.json">s3-read-write-one-bucket.json</a></td><td>Everything in the read recipe, plus upload, overwrite, tag and delete objects in <code>BUCKET_NAME</code></td><td>Delete or reconfigure the bucket itself (versioning, policy, CORS, encryption), touch any other bucket</td></tr>
+    </tbody>
+  </table></div>
+  <p>The list-only recipe is the one you asked for, written out:</p>
+  <pre class="shell">{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Sid": "SeeTheBucketNamesAndNothingElse",
+      "Effect": "Allow",
+      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation"],
+      "Resource": "*" }
+  ]
+}</pre>
+  <p>Notes that matter in practice:</p>
+  <ul>
+    <li><b>Bucket-level and object-level actions take different ARNs.</b> <code>s3:ListBucket</code> is granted on <code>arn:aws:s3:::BUCKET_NAME</code>; <code>s3:GetObject</code> on <code>arn:aws:s3:::BUCKET_NAME/*</code>. Mixing them up is the most common reason a "read" policy reads nothing.</li>
+    <li><b>Hiding the other buckets' names</b>: drop the <code>SeeTheBucketNames</code> statement from the read recipes. The S3 browser then cannot list buckets, and you open yours by name instead (its <b>Open a bucket by name</b> form).</li>
+    <li><b>The folder recipe</b> follows AWS's own home-folder pattern: listing is allowed for the prefixes <code>""</code>, <code>FOLDER/</code> and <code>FOLDER/*</code>, so the bucket's top-level names are visible and nothing below another folder is. The S3 browser sends <code>prefix=</code> at a bucket's root, as the S3 console does, so the condition matches.</li>
+    <li><b>KMS-encrypted buckets</b> (SSE-KMS with your own key) also need <code>kms:Decrypt</code> on that key for reads, and <code>kms:GenerateDataKey</code> for writes. SSE-S3, the default, needs nothing more.</li>
+    <li><b>A bucket policy can still deny</b> what the permission set allows, and an SCP above the account can too. The simulator in section 4 does not see either.</li>
+    <li><b>The session check needs nothing.</b> STS <code>GetCallerIdentity</code> works with every permission set, so the sessions page can always say who you are.</li>
+  </ul>
+
+  <h2 id="cli">3. Set it up from the CLI</h2>
+  <p>Run this once, with the administrator role, from <b>AWS CloudShell</b> (the terminal icon in the console's top bar: already signed in, the AWS CLI installed) or from a terminal holding an administrator session. It needs the management account, or a delegated administrator for Identity Center, in <b>the region Identity Center is enabled in</b>.</p>
+  <pre class="shell"><span class="d"># 0. where Identity Center lives, and what to work on</span>
+export AWS_REGION=eu-west-2                       <span class="d"># where Identity Center is enabled (its Settings page)</span>
+INSTANCE_ARN=$(aws sso-admin list-instances --query 'Instances[0].InstanceArn' --output text)
+IDENTITY_STORE_ID=$(aws sso-admin list-instances --query 'Instances[0].IdentityStoreId' --output text)
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+BUCKET=your-bucket-name
+echo $INSTANCE_ARN $IDENTITY_STORE_ID $ACCOUNT_ID
+
+<span class="d"># 1. the policies, from this site, with your bucket's name in them</span>
+curl -sO https://aws.twin.sgit.ai/iam/policies/s3-list-bucket-names.json
+curl -s https://aws.twin.sgit.ai/iam/policies/s3-read-one-bucket.json | sed "s/BUCKET_NAME/$BUCKET/g" &gt; s3-read-one-bucket.json
+cat s3-read-one-bucket.json                       <span class="d"># read what you are about to grant</span>
+
+<span class="d"># 2. two permission sets, one-hour sessions</span>
+PS_LIST=$(aws sso-admin create-permission-set --instance-arn $INSTANCE_ARN --name S3-List-Bucket-Names \
+            --description "See bucket names, not contents" --session-duration PT1H \
+            --query 'PermissionSet.PermissionSetArn' --output text)
+aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE_ARN \
+            --permission-set-arn $PS_LIST --inline-policy file://s3-list-bucket-names.json
+
+PS_READ=$(aws sso-admin create-permission-set --instance-arn $INSTANCE_ARN --name S3-Read-One-Bucket \
+            --description "Read one bucket" --session-duration PT1H \
+            --query 'PermissionSet.PermissionSetArn' --output text)
+aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE_ARN \
+            --permission-set-arn $PS_READ --inline-policy file://s3-read-one-bucket.json
+
+<span class="d"># 3. a group per permission set; you (or a new daily user) in them</span>
+G_LIST=$(aws identitystore create-group --identity-store-id $IDENTITY_STORE_ID \
+            --display-name s3-list-only --description "Can list bucket names" --query GroupId --output text)
+G_READ=$(aws identitystore create-group --identity-store-id $IDENTITY_STORE_ID \
+            --display-name s3-read-one-bucket --description "Can read one bucket" --query GroupId --output text)
+
+<span class="d">#    an existing user, by user name ...</span>
+USER_ID=$(aws identitystore get-user-id --identity-store-id $IDENTITY_STORE_ID --query UserId --output text \
+            --alternate-identifier '{"UniqueAttribute":{"AttributePath":"userName","AttributeValue":"YOUR_USER_NAME"}}')
+<span class="d">#    ... or a new daily user (see section 5 for their first sign-in)</span>
+USER_ID=$(aws identitystore create-user --identity-store-id $IDENTITY_STORE_ID --user-name daily-user \
+            --display-name "Daily User" --name GivenName=Daily,FamilyName=User \
+            --emails Value=daily.user@example.com,Type=work,Primary=true --query UserId --output text)
+
+aws identitystore create-group-membership --identity-store-id $IDENTITY_STORE_ID --group-id $G_LIST --member-id UserId=$USER_ID
+aws identitystore create-group-membership --identity-store-id $IDENTITY_STORE_ID --group-id $G_READ --member-id UserId=$USER_ID
+
+<span class="d"># 4. assign: group + account + permission set (this also creates the role in the account)</span>
+aws sso-admin create-account-assignment --instance-arn $INSTANCE_ARN --target-id $ACCOUNT_ID --target-type AWS_ACCOUNT \
+            --permission-set-arn $PS_LIST --principal-type GROUP --principal-id $G_LIST
+aws sso-admin create-account-assignment --instance-arn $INSTANCE_ARN --target-id $ACCOUNT_ID --target-type AWS_ACCOUNT \
+            --permission-set-arn $PS_READ --principal-type GROUP --principal-id $G_READ
+aws sso-admin list-account-assignment-creation-status --instance-arn $INSTANCE_ARN   <span class="d"># SUCCEEDED within seconds</span>
+
+<span class="d"># 5. later, after editing a permission set's policy: push the change to the accounts that have it</span>
+aws sso-admin put-inline-policy-to-permission-set --instance-arn $INSTANCE_ARN \
+            --permission-set-arn $PS_READ --inline-policy file://s3-read-one-bucket.json
+aws sso-admin provision-permission-set --instance-arn $INSTANCE_ARN \
+            --permission-set-arn $PS_READ --target-type ALL_PROVISIONED_ACCOUNTS</pre>
+  <p>The other two recipes are the same three steps with their files: <code>s3-read-one-folder.json</code> (also <code>sed "s/FOLDER/reports/g"</code>) and <code>s3-read-write-one-bucket.json</code>. To give a permission set an AWS managed policy instead, for example S3 read-only on every bucket:</p>
+  <pre class="shell">PS_READ_ALL=$(aws sso-admin create-permission-set --instance-arn $INSTANCE_ARN --name S3-Read-All \
+            --session-duration PT1H --query 'PermissionSet.PermissionSetArn' --output text)
+aws sso-admin attach-managed-policy-to-permission-set --instance-arn $INSTANCE_ARN \
+            --permission-set-arn $PS_READ_ALL --managed-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</pre>
+  <p>Seeing what exists:</p>
+  <pre class="shell">aws sso-admin list-permission-sets --instance-arn $INSTANCE_ARN
+aws sso-admin describe-permission-set --instance-arn $INSTANCE_ARN --permission-set-arn $PS_READ
+aws sso-admin get-inline-policy-for-permission-set --instance-arn $INSTANCE_ARN --permission-set-arn $PS_READ
+aws sso-admin list-account-assignments --instance-arn $INSTANCE_ARN --account-id $ACCOUNT_ID --permission-set-arn $PS_READ
+aws identitystore list-users --identity-store-id $IDENTITY_STORE_ID
+aws identitystore list-group-memberships --identity-store-id $IDENTITY_STORE_ID --group-id $G_READ</pre>
+  <p class="small dim">The console does the same under IAM Identity Center: <b>Permission sets</b> (Create permission set, Custom permission set, paste the JSON into the inline policy), <b>Groups</b>, and <b>AWS accounts</b> (select the account, Assign users or groups).</p>
+
+  <h2 id="simulate">4. Test a policy before anyone has it</h2>
+  <p><code>iam simulate-custom-policy</code> evaluates a policy document against actions and resources without assigning it to anyone. It does not see bucket policies or SCPs, so it answers "does this policy allow it", which is the question while writing one.</p>
+  <pre class="shell">aws iam simulate-custom-policy --policy-input-list file://s3-read-one-bucket.json \
+    --action-names s3:ListAllMyBuckets s3:ListBucket s3:GetObject s3:PutObject \
+    --resource-arns "arn:aws:s3:::$BUCKET" "arn:aws:s3:::$BUCKET/notes.txt" \
+    --query "EvaluationResults[].[EvalActionName,EvalResourceName,EvalDecision]" --output table
+
+<span class="d"># the folder recipe: the decision depends on the prefix asked for</span>
+aws iam simulate-custom-policy --policy-input-list file://s3-read-one-folder.json \
+    --action-names s3:ListBucket --resource-arns "arn:aws:s3:::$BUCKET" \
+    --context-entries ContextKeyName=s3:prefix,ContextKeyValues=other/,ContextKeyType=string \
+    --query "EvaluationResults[].EvalDecision" --output text      <span class="d"># implicitDeny</span></pre>
+  <p>The simulator pairs every action with every resource. For the read-one-bucket recipe expect <code>allowed</code> for ListAllMyBuckets (its resource is <code>*</code>), for ListBucket on the bucket and for GetObject on the object; <code>implicitDeny</code> for ListBucket on the object and GetObject on the bucket (the wrong ARN for each, which is the point of the check), and for PutObject everywhere.</p>
+
+  <h2 id="first-sign-in">5. A new user's first sign-in, and MFA</h2>
+  <ul>
+    <li><b>Users created from the CLI get no invitation.</b> In the IAM Identity Center console, open <b>Users</b>, the user, <b>Reset password</b>, and choose to send them an email with instructions (or generate a one-time password and hand it over yourself). Some consoles also offer, under Settings, Authentication, a setting to <i>send an email one-time password for users created from the API</i>; with it on, the first sign-in works without the reset.</li>
+    <li><b>Require MFA</b>: Settings, Authentication, Multi-factor authentication, Configure: prompt <b>every time they sign in</b>, allow authenticator apps and security keys or passkeys, and require users without a device to register one at sign-in.</li>
+    <li><b>Session length</b> is the permission set's: <code>PT1H</code> above. The access portal's own sign-in lasts longer (Settings, Authentication, Session duration); shorter is better there too.</li>
+  </ul>
+
+  <h2 id="try">6. Try it in the S3 browser</h2>
+  <ol>
+    <li>Sign in to the access portal as the narrow user (or as yourself), pick the account, and pick <b>S3-List-Bucket-Names</b>, not AdministratorAccess. Choose <b>Access keys</b> and copy any block.</li>
+    <li>Paste it on <a href="../sessions/index.html">the sessions page</a> and press <b>Check it against AWS</b>. The ARN should name <code>AWSReservedSSO_S3-List-Bucket-Names_…</code>.</li>
+    <li>In the same tab, open <a href="../s3/index.html#/live">the S3 browser's Live session view</a>. To list buckets, start the relay (<a href="../how-it-works/index.html#relay">what it is</a>) and tick <b>Use the local relay</b>; allow the browser's local-network prompt. Press <b>Go live</b>.</li>
+    <li>What each recipe should show:</li>
+  </ol>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Permission set</th><th>Bucket list</th><th>Open a bucket</th><th>Open a file</th><th>Upload (writes ticked)</th></tr></thead>
+    <tbody>
+      <tr><td>S3-List-Bucket-Names</td><td>every name</td><td><code>AccessDenied</code></td><td>n/a</td><td><code>AccessDenied</code></td></tr>
+      <tr><td>S3-Read-One-Bucket</td><td>every name</td><td>yours lists; the others <code>AccessDenied</code></td><td>yes, in yours</td><td><code>AccessDenied</code></td></tr>
+      <tr><td>S3-Read-One-Folder</td><td>every name</td><td>top level, and inside <code>FOLDER/</code></td><td>under <code>FOLDER/</code> only</td><td><code>AccessDenied</code></td></tr>
+      <tr><td>S3-Read-Write-One-Bucket</td><td>every name</td><td>yours</td><td>yes, in yours</td><td>yes, in yours</td></tr>
+    </tbody>
+  </table></div>
+  <p>Writes are refused by the S3 browser itself in live mode unless <b>Allow writes</b> is ticked, before any request is made, whatever the permission set says. A refusal from AWS shows as its own code, <code>AccessDenied</code>, which is the least-privilege setup working.</p>
+
+  <h2 id="cors">7. Without the relay: a CORS rule on the bucket</h2>
+  <p>A browser can read an answer from a bucket only if the bucket has a CORS rule naming this site's origin. With one, the S3 browser reaches that bucket straight from the page, no relay. Listing all buckets still needs the relay: S3's ListBuckets endpoint has no CORS at all.</p>
+  <p>A CORS rule grants nothing. It only lets a page read the answers to requests the session's own policy already allows; an unsigned request, or a session without permission, still gets <code>AccessDenied</code>. Add it with the administrator role (it needs <code>s3:PutBucketCORS</code>, which no recipe above grants):</p>
+  <pre class="shell">curl -sO https://aws.twin.sgit.ai/iam/policies/bucket-cors-for-aws-twin.json
+aws s3api get-bucket-cors --bucket $BUCKET          <span class="d"># an existing rule? merge into it rather than replace it</span>
+aws s3api put-bucket-cors --bucket $BUCKET --cors-configuration file://bucket-cors-for-aws-twin.json
+aws s3api get-bucket-cors --bucket $BUCKET</pre>
+  <p>The rule: <a href="policies/bucket-cors-for-aws-twin.json">bucket-cors-for-aws-twin.json</a>, origin <code>https://aws.twin.sgit.ai</code> only, the methods the browser uses, and the response headers it needs to see (ETag, version id, region). Remove it with <code>aws s3api delete-bucket-cors --bucket $BUCKET</code>.</p>
+
+  <h2 id="admin">8. Move the administrator out of daily reach</h2>
+  <p>The order matters; do not remove your own administrator access before the replacement is proven.</p>
+  <ol>
+    <li><b>Create a separate administrator user</b> (its own user name, and its own email address, for example a plus-address), with MFA, and a group <code>break-glass-admins</code> assigned <b>AdministratorAccess</b> on the account. Give that permission set a one-hour session too.</li>
+    <li><b>Sign in as it once</b> in a private window and check that AdministratorAccess works.</li>
+    <li><b>Remove AdministratorAccess from your daily user</b>, then sign out and back in to see only the narrow roles:</li>
+  </ol>
+  <pre class="shell">PS_ADMIN=arn:aws:sso:::permissionSet/…        <span class="d"># from: aws sso-admin list-permission-sets, then describe-permission-set</span>
+aws sso-admin list-account-assignments --instance-arn $INSTANCE_ARN --account-id $ACCOUNT_ID --permission-set-arn $PS_ADMIN
+aws sso-admin delete-account-assignment --instance-arn $INSTANCE_ARN --target-id $ACCOUNT_ID --target-type AWS_ACCOUNT \
+            --permission-set-arn $PS_ADMIN --principal-type USER --principal-id $USER_ID</pre>
+  <ul>
+    <li>If the administrator access came through a group, remove the daily user from that group instead (<code>aws identitystore delete-group-membership</code>).</li>
+    <li>The account's <b>root user</b> stays the last resort: MFA on, no access keys, password in a safe place. It can repair Identity Center if every administrator is locked out.</li>
+    <li>Service users (for example ones used by Grafana) want their own narrow permission sets as well, scoped to what they read.</li>
+  </ul>
+
+  <h2 id="checked">How these commands were checked</h2>
+  <p>Every command on this page was run through the AWS CLI (version 1.46) against the AWS twin's local endpoint (<code>python -m aws_twin</code>) with placeholder values. The CLI validates parameter names, shapes and required values before it sends anything, so a command with a wrong flag fails there; each of these reached the twin, which answered the S3 calls and returned <code>NotImplemented</code>, by name, for the Identity Center and IAM ones. The policy files are checked by the site's tests: valid JSON, version <code>2012-10-17</code>, placeholders present, and the CORS rule accepted by S3's <code>PutBucketCors</code> shape. What was not done is running them against a real organisation: AWS's own validation of the policy grammar happens in <code>put-inline-policy-to-permission-set</code>, and section 4 is how to catch a mistake before that.</p>
+  <div class="pagenav"><a href="../sessions/index.html">← AWS sessions</a><a href="../how-it-works/index.html">How it works →</a></div>
+</main>
+
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.4.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../s3/index.html">S3 browser</a>
+    <a href="../sessions/index.html">AWS sessions</a>
+    <a href="../iam/index.html">Least privilege (IAM)</a>
+    <a href="../how-it-works/index.html">How it works</a>
+    <a href="../python/index.html">The Python twin</a>
+    <a href="../twin/index.html">JavaScript proof of concept</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../briefs/index.html">The briefs</a>
+    <a href="../REALITY.md">Reality</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

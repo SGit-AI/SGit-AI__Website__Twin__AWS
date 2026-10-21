@@ -1,0 +1,8 @@
+flowchart LR
+  user["A user<br/>you sign in as this"] --> group["A group<br/>e.g. s3-readers"]
+  group --> assign["An assignment<br/>group + account + permission set"]
+  ps["A permission set<br/>a policy and a session length"] --> assign
+  assign --> role["A role in the account<br/>AWSReservedSSO_name_hash"]
+  role --> portal["The access portal<br/>pick account, then role"]
+  portal --> session["A session<br/>key id, secret, token<br/>expires in 1 hour"]
+  session --> twin["Paste into aws.twin<br/>sessions, then S3 browser"]

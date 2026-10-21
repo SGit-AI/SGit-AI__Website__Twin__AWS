@@ -1,0 +1,17 @@
+sequenceDiagram
+  autonumber
+  participant P as Python in the tab
+  participant BR as The browser
+  participant R as Twin__Relay.py (127.0.0.1:4567)
+  participant A as AWS (s3.amazonaws.com)
+  Note over BR,R: once per tab: the page fetches /health,<br/>the browser asks you to allow local network access
+  P->>P: botocore signs ListBuckets with the pasted session
+  P->>BR: the same method to the relay, x-twin-target = the real URL
+  BR->>R: OPTIONS preflight, with Access-Control-Request-Private-Network
+  R-->>BR: 204: this origin only, private network allowed
+  BR->>R: the signed request, unchanged
+  R->>R: target is https://*.amazonaws.com? origin allowed?
+  R->>A: the same method, path, headers and body
+  A-->>R: the answer (AWS checks the signature, not the relay)
+  R-->>BR: the answer, plus CORS headers
+  BR-->>P: status, headers, body

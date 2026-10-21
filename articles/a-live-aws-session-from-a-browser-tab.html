@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A live AWS session from a browser tab: Python in the page signed a request with my real Identity Center session, AWS answered, and no server of ours was in the path · aws.twin.sgit.ai</title>
+<meta name="description" content="This morning the AWS twin was an idea in a newsroom article. By the evening I pasted a session from my own IAM Identity Center into a page on aws.twin.sgit.ai, pressed a button, and Python running inside the browser tab, boto3 under Pyodide with the twin&#x27;s hook in front of it, signed a request with…">
+<link rel="canonical" href="https://aws.twin.sgit.ai/articles/a-live-aws-session-from-a-browser-tab.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="aws.twin.sgit.ai">
+<meta property="og:url" content="https://aws.twin.sgit.ai/articles/a-live-aws-session-from-a-browser-tab.html">
+<meta property="og:title" content="A live AWS session from a browser tab: Python in the page signed a request with my real Identity Center session, AWS answered, and no server of ours was in the path · aws.twin.sgit.ai">
+<meta property="og:description" content="This morning the AWS twin was an idea in a newsroom article. By the evening I pasted a session from my own IAM Identity Center into a page on aws.twin.sgit.ai, pressed a button, and Python running inside the browser tab, boto3 under Pyodide with the twin&#x27;s hook in front of it, signed a request with…">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="text/markdown" href="a-live-aws-session-from-a-browser-tab.md" title="This page as markdown">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<nav class="site"><div class="row">
+  <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
+  <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
+  <span class="stage-pill">proof of concept</span>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.4.0</a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
+  <div class="nav-items">
+    <div class="ni ni-has">
+      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../sessions/index.html">AWS sessions</a>
+      <a class="sl" href="../iam/index.html">Least privilege (IAM)</a>
+      <a class="sl" href="../how-it-works/index.html">How it works: live, step by step</a>
+      <a class="sl" href="../python/index.html">The Python twin</a>
+      <a class="sl" href="../python/tests.html">Run the tests here</a>
+      <a class="sl" href="../twin/index.html">The JavaScript proof of concept</a>
+      <a class="sl" href="../design/index.html">The design</a>
+      <a class="sl" href="../workflow/index.html">The workflow</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../naming/index.html">Naming<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../naming/index.html">Why aws.twin</a>
+      <a class="sl" href="../naming/index.html#convention">The convention</a>
+      <a class="sl" href="https://twins.sgit.ai/naming/index.html">The ruling, on the hub ↗</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../shipped/index.html">Status<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../shipped/index.html">Built, and designed</a>
+      <a class="sl" href="../shipped/index.html#next">What is next</a>
+      <a class="sl" href="../shipped/index.html#claims">What this does not claim</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../articles/index.html">Articles<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../articles/index.html">All articles</a>
+      <a class="sl" href="../articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>
+      <a class="sl" href="../articles/the-twin-is-python-now.html">The twin is Python now</a>
+      <a class="sl" href="../articles/boto3-in-the-browser.html">boto3 in the browser</a>
+      <a class="sl" href="../articles/first-go-at-the-aws-twin.html">A first go at the AWS twin</a>
+      <a class="sl" href="../about/team.html">The team</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../admin/index.html">Site<span class="caret">&#9662;</span></a>
+      <div class="sub">
+      <a class="sl" href="../admin/index.html">Admin &amp; engineering</a>
+      <a class="sl" href="../admin/versions.html">Release history</a>
+      <a class="sl" href="../briefs/index.html">The briefs</a>
+      <a class="sl" href="../REALITY.md">Reality: what exists</a>
+      <a class="sl" href="../BRIEF-CORRECTIONS.md">Corrections</a>
+      <a class="sl" href="../admin/index.html#requests">Requests to other sites</a>
+      <a class="sl" href="../llms.txt">llms.txt</a>
+      </div>
+    </div>
+  </div>
+  <a class="gh" href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">★ GitHub</a>
+  <script src="../assets/nav.js" defer></script>
+</div></nav>
+
+<main class="doc article">
+<div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / <a href="index.html">Articles</a> / A live AWS session from a browser tab: Python in the page signed a request with my real Identity Center session, AWS answered, and no server of ours was in the path</div>
+<h1>A live AWS session from a browser tab: Python in the page signed a request with my real Identity Center session, AWS answered, and no server of ours was in the path</h1>
+<p class="byline">By <a href="https://sgit.ai/about/">Dinis Cruz</a> · 2026-10-21 · published · site v0.4.0 · <span class="kind">in his own voice, through an agent</span></p>
+<p class="lead"><b>Summary:</b> This morning the AWS twin was an idea in a newsroom article. By the evening I pasted a session from my own IAM Identity Center into a page on aws.twin.sgit.ai, pressed a button, and Python running inside the browser tab, boto3 under Pyodide with the twin&#x27;s hook in front of it, signed a request with that session and sent it to AWS STS, which answered with my account, my role and my user. No backend, no proxy of ours, no credentials stored anywhere but the tab, for the session&#x27;s hour. I think that is a major milestone, and this is why. It means the Python I have written for years, OSBot-AWS and OSBot-Utils, runs in a page against a real account; that the same code and the same tests run in CI against the twin; and that the twin sits in front of every call, so we see, record and choose where each one goes. The build agent then took it to S3: the S3 browser can go live, directly for STS and for buckets with a CORS rule, and through a small relay on my own machine for what S3 will not answer a browser, such as listing buckets. The relay holds no credentials and cannot make a request I did not sign. And because the session I checked was AdministratorAccess, it also wrote the page I needed next: least privilege for the twin, with IAM Identity Center permission sets that can only list bucket names, or read one bucket. Browsing my real buckets with a narrow role is the next thing I do.</p>
+<p class="chips"><span class="chip">aws</span> <span class="chip">twins</span> <span class="chip">python</span> <span class="chip">pyodide</span> <span class="chip">boto3</span> <span class="chip">osbot-aws</span> <span class="chip">s3</span> <span class="chip">sts</span> <span class="chip">cors</span> <span class="chip">relay</span> <span class="chip">iam-identity-center</span> <span class="chip">least-privilege</span> <span class="chip">milestone</span> <span class="chip">article</span></p>
+<figure class="shot diagram"><img src="images/live-from-the-tab.svg" alt="From a browser tab to a real AWS account. On the left, the tab: the S3 browser, OSBot-AWS and boto3 in Python under Pyodide; the pasted session, in the tab&#x27;s sessionStorage for its hour; botocore signing every request with SigV4, so the secret key is used in the tab and never leaves it; the twin&#x27;s hook choosing twin, live or replay; every request recorded, and writes refused in live mode unless allowed. On the right, the account. STS answers any origin, so the request goes straight from the browser, and a real session was checked that way. A bucket with a CORS rule for this site answers directly too. S3&#x27;s ListBuckets, and buckets without a rule, never answer a browser, so the signed request goes to a one-file relay on the user&#x27;s own machine, which adds the CORS headers and passes it on unchanged; AWS checks the signature. No server of ours is in the path." loading="lazy"><figcaption>From a browser tab to a real AWS account. On the left, the tab: the S3 browser, OSBot-AWS and boto3 in Python under Pyodide; the pasted session, in the tab&#x27;s sessionStorage for its hour; botocore signing every request with SigV4, so the secret key is used in the tab and never leaves it; the twin&#x27;s hook choosing twin, live or replay; every request recorded, and writes refused in live mode unless allowed. On the right, the account. STS answers any origin, so the request goes straight from the browser, and a real session was checked that way. A bucket with a CORS rule for this site answers directly too. S3&#x27;s ListBuckets, and buckets without a rule, never answer a browser, so the signed request goes to a one-file relay on the user&#x27;s own machine, which adds the CORS headers and passes it on unchanged; AWS checks the signature. No server of ours is in the path.</figcaption></figure>
+<h2 id="in-short">In short</h2>
+<ul><li><b>A real session, from a browser tab, answered by AWS.</b> I pasted my IAM Identity Center session on <a href="../sessions/index.html">the sessions page</a>, pressed <b>Check it against AWS</b>, and STS GetCallerIdentity came back with my account, my role and my user. Signed by botocore in Python, in the page, and sent by the browser.</li><li><b>No server of ours in the path.</b> The tab signs; the browser sends; AWS checks the signature. The session lives in the tab&#x27;s sessionStorage and nowhere else, and expires in an hour.</li><li><b>The same Python everywhere.</b> OSBot-AWS and boto3 make the same calls in CI, against the twin, and in the page, against the account. One package, one set of tests.</li><li><b>The twin sees every call first.</b> One hook inside botocore decides per service: answer from the twin, send on to AWS, or replay a recording. Every request is recorded either way.</li><li><b>S3 is live now too.</b> The S3 browser goes live directly for buckets with a CORS rule for this site, and through a one-file relay on my own machine for the rest, including listing buckets, which S3 never answers to a browser.</li><li><b>The relay cannot act for me.</b> It holds no credentials, forwards only to AWS, only for this site, only on 127.0.0.1, and sees a signature valid for one request, never the secret key.</li><li><b>Read-only by default.</b> In live mode the S3 browser refuses every write before it sends anything, unless I tick <b>Allow writes</b>.</li><li><b>And the uncomfortable part.</b> The session I checked was AdministratorAccess. That is why there is now <a href="../iam/index.html">a least-privilege page</a>: permission sets that can only list bucket names, read one bucket, read one folder, or read and write one bucket, with the commands checked.</li></ul>
+<h2 id="today">What happened today</h2>
+<p>This morning, the newsroom published <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">AWS from the vault</a>, and the naming was decided: aws.twin.sgit.ai. Through the day the agent built <a href="first-go-at-the-aws-twin.html">a first proof of concept</a>, measured <a href="boto3-in-the-browser.html">boto3 running in the browser</a> under Pyodide, and then <a href="the-twin-is-python-now.html">moved the twin itself to Python</a>, so that the twin, OSBot-AWS and the tests are one Python codebase that runs both under pytest and in the page.</p>
+<p>Then I wired GitHub Pages to the repository, the site deployed, and I did the obvious thing. I signed in to my AWS access portal, picked the account and the role, copied the access keys block, and pasted it into the sessions page. The check came back with the account id, the role, and my user. My first reaction, honestly, was that this is a bit insane. Not because calling STS is hard, but because of everything that had to be true for it to work from a static page.</p>
+<h2 id="why">Why I think it is a milestone</h2>
+<p>Look at what that one request needed. A CPython interpreter, compiled to WebAssembly, running in the tab. boto3 and botocore, unmodified, from PyPI. The twin&#x27;s own Python package, unpacked from a zip the site serves. SigV4 signing, done by botocore, in the browser, with a secret that was pasted a minute before and never sent anywhere. A route table that said &quot;STS goes live&quot;. And AWS answering a browser, which STS does, for any origin.</p>
+<p>None of that involved a server of ours. That matters to me for three reasons.</p>
+<p><b>The code I already have carries over.</b> I have years of AWS tooling in Python, most of it in OSBot-AWS and OSBot-Utils. If boto3 runs in a page, then that code runs in a page, and the agent showed OSBot-AWS doing exactly that against the twin earlier today. Now the same calls reach a real account.</p>
+<p><b>The twin is in front of everything.</b> This was the point of the design: you hit the twin first. Every call goes through one hook, which records it and decides where it goes. Against the twin it costs nothing and needs no credentials. Against the account it is the same call, the same code, recorded the same way. So what we build and test against the twin is what runs against the account, and a recording of the account becomes a test that needs no account.</p>
+<p><b>Credentials stay where they should.</b> The session is temporary, comes from Identity Center, lives in one tab for one hour, and is used only to compute signatures inside that tab. There is no place on our side where it could leak from, because there is no our side in the path.</p>
+<h2 id="s3">Then S3</h2>
+<p>STS answers a browser. S3 mostly does not: a bucket answers a page only when the bucket has a CORS rule naming that page&#x27;s origin, and the call that lists all buckets never answers a browser at all. So I asked how I could browse my real files with the S3 browser, and the agent built both ways.</p>
+<p><b>Directly</b>, for buckets with a CORS rule for aws.twin.sgit.ai. The rule is a file on the site and one CLI command; it grants nothing by itself, it only lets the page read answers my session is already allowed to get.</p>
+<p><b>Through a local relay</b>, for everything else. This is the part I asked to have explained properly, and it now has <a href="../how-it-works/index.html#relay">its own page, with diagrams</a>. In short: it is one Python file, standard library only, that I download, read and run on my own machine. The page sends it the already-signed request with the real AWS address in a header; it checks that the address is AWS over HTTPS and that the request comes from aws.twin.sgit.ai; it sends the request on unchanged and gives the answer back with the CORS headers the browser wants. AWS checks the signature exactly as it would from anywhere. The relay never sees the secret key, so it cannot make a request I did not sign. Chrome asks once whether the site may talk to something on my machine, and I allow it.</p>
+<p>The agent tested that path end to end in a headless browser without an AWS account, with the twin&#x27;s own server standing in for AWS behind the relay, and that caught three bugs that would each have broken the first real upload or download. Those are on the explainer page too, and I like that they were found by a stand-in rather than by my buckets.</p>
+<p>The S3 browser is <b>read-only by default</b> in live mode. Upload, delete, rename and the rest are refused before any request is made, unless I tick <b>Allow writes</b>. That is a brake on the twin&#x27;s mistakes and on mine.</p>
+<h2 id="admin">The uncomfortable part: AdministratorAccess</h2>
+<p>The session I checked was AdministratorAccess. That is the role I have been signing in with, because it was the one that was there, and it has a ridiculous amount of power for browsing a few buckets. So the other page the agent wrote today is <a href="../iam/index.html">least privilege for the twin</a>.</p>
+<p>The idea that changed how I think about it: in Identity Center the power is not in the user I sign in as, it is in the role I pick after signing in. Each permission set assigned to me shows up as a role in the portal. So the fix is to have narrow permission sets and pick them by default, and to move AdministratorAccess to a separate sign-in that my daily session cannot reach. The page has the four S3 recipes as policy files (list bucket names and nothing else, read one bucket, read one folder, read and write one bucket), the CLI to create the permission sets, groups and assignments, how to test a policy with the IAM simulator before anyone has it, and the order to do things in so I do not lock myself out. Every command on it was run through the AWS CLI&#x27;s own parameter checks against the twin before it was published, and CI now checks them on every push.</p>
+<h2 id="next">What is next</h2>
+<ul><li><b>Browse my real buckets with a list-only role.</b> Create S3-List-Bucket-Names, sign in, pick it, paste the session, start the relay, go live. Bucket names should appear, and opening one should say AccessDenied. That is the least-privilege setup working, and it is the first real-account S3 test.</li><li><b>Then read one bucket</b>, with the read recipe, directly with a CORS rule and through the relay, and compare the traffic.</li><li><b>Move the administrator role</b> to its own user, as the page says, in that order.</li><li><b>Record a live session and replay it</b> against the twin, which is the workflow this whole thing exists for.</li><li><b>Keep the session somewhere better than a tab.</b> A vault is the slot the design has for it, and Cognito identity pools or web identity are the measured ways to get one without pasting.</li></ul>
+<h2 id="limits">What this does not claim</h2>
+<ul><li>That the S3 browser has browsed a real account. It has browsed the twin, and a stand-in for AWS behind the relay; my real session has been checked against STS. The real-account S3 browse is the next step above.</li><li>That the relay is safe to expose. It listens on 127.0.0.1 and answers one site; running it any other way is not what it was written for.</li><li>That the IAM commands were run against a real organisation. They were validated by the AWS CLI against the twin; AWS validates the policy grammar when it is put.</li><li>That this is how sessions should be obtained long term. Pasting works today and holds nothing; it is the first method, not the last.</li></ul>
+<h2 id="sources">Where this comes from</h2>
+<p>My voice memo and messages of 21 October 2026, after checking my own session, published in full in <a href="../briefs/index.html">the briefs</a>. What was built is on <a href="../how-it-works/index.html">How it works</a> and <a href="../iam/index.html">Least privilege for the twin</a>; the code is in <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS">the repository</a>. Earlier today: <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">AWS from the vault</a>, <a href="first-go-at-the-aws-twin.html">A first go at the AWS twin</a>, <a href="boto3-in-the-browser.html">boto3 in the browser</a>, <a href="the-twin-is-python-now.html">The twin is Python now</a>.</p>
+<div class="pagenav"><a href="the-twin-is-python-now.html">← The twin is Python now: one package that answers AWS&#x27;s wire in CI and in the browser, OSBot-AWS running against it unchanged, and an S3 browser whose every button is Python</a><a href="index.html">All articles →</a></div>
+<p class="small dim" style="margin-top:2rem">This page as <a href="a-live-aws-session-from-a-browser-tab.md">markdown</a> · its source, <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/main/admin/content/articles/a-live-aws-session-from-a-browser-tab.md"><code>admin/content/articles/a-live-aws-session-from-a-browser-tab.md</code></a> · licence <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+</main>
+
+<footer class="site"><div class="cols">
+  <div>
+    <div class="brandline">aws.twin<span>.sgit.ai</span></div>
+    <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
+    <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
+    <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.4.0</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+  </div>
+  <div>
+    <h4>The twin</h4>
+    <a href="../s3/index.html">S3 browser</a>
+    <a href="../sessions/index.html">AWS sessions</a>
+    <a href="../iam/index.html">Least privilege (IAM)</a>
+    <a href="../how-it-works/index.html">How it works</a>
+    <a href="../python/index.html">The Python twin</a>
+    <a href="../twin/index.html">JavaScript proof of concept</a>
+    <a href="../design/index.html">The design</a>
+    <a href="../workflow/index.html">The workflow</a>
+  </div>
+  <div>
+    <h4>Naming</h4>
+    <a href="../naming/index.html">Why aws.twin</a>
+    <a href="../naming/index.html#convention">The convention</a>
+    <a href="https://twins.sgit.ai/naming/index.html">The ruling ↗</a>
+  </div>
+  <div>
+    <h4>Status</h4>
+    <a href="../shipped/index.html">Built, and designed</a>
+    <a href="../shipped/index.html#next">What is next</a>
+    <a href="../shipped/index.html#claims">What this does not claim</a>
+  </div>
+  <div>
+    <h4>Site</h4>
+    <a href="../articles/index.html">Articles</a>
+    <a href="../about/team.html">The team</a>
+    <a href="../admin/index.html">Admin &amp; engineering</a>
+    <a href="../admin/versions.html">Release history</a>
+    <a href="../briefs/index.html">The briefs</a>
+    <a href="../REALITY.md">Reality</a>
+    <a href="../llms.txt">llms.txt</a>
+  </div>
+</div></footer>
+
+</body>
+</html>

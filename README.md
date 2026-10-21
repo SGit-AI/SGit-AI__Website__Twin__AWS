@@ -15,12 +15,15 @@ REST-XML, STS GetCallerIdentity) from a virtual file system, so boto3, OSBot-AWS
 CLI reach it unchanged. The same package and the same tests run under pytest in CI and
 under Pyodide in the browser, where it powers the S3 browser (`s3/`). A live route per
 service sends chosen calls on to the real account with a pasted session; the sessions page
-(`sessions/`) checks one against AWS STS from the browser. The first, JavaScript proof of
-concept is still at `twin/`.
+(`sessions/`) checks one against AWS STS from the browser, and since v0.4.0 the S3 browser goes
+live, directly or through a one-file local relay (`aws_twin/core/Twin__Relay.py`) for what S3
+will not answer a browser. `how-it-works/` explains the live path step by step; `iam/` is the
+least-privilege guidance. The first, JavaScript proof of concept is still at `twin/`.
 
 ```sh
 pip install boto3 osbot-aws osbot-utils pytest
-python -m pytest                     # 18 pass; AWS_TWIN_LIVE_TESTS=1 adds one live STS call with invented keys
+python -m pytest                     # 24 pass; AWS_TWIN_LIVE_TESTS=1 adds live STS and S3 calls with invented keys
+python aws_twin/core/Twin__Relay.py  # the local relay, for the S3 browser's live mode (127.0.0.1:4567)
 python -m aws_twin --port 4566       # the twin as a local endpoint: export AWS_ENDPOINT_URL=http://127.0.0.1:4566
 ```
 
@@ -41,6 +44,8 @@ pyproject.toml                  the package; no runtime dependency
 index.html                      the front page
 s3/index.html                   the S3 browser: Python behind every button
 sessions/index.html             AWS sessions: setup, paste, a live check, better methods measured
+iam/index.html  iam/policies/   least privilege: S3 permission sets, the CLI, the bucket CORS rule
+how-it-works/index.html         the live path step by step, with diagrams
 python/index.html  tests.html   the Python twin, and its tests in the browser
 twin/index.html                 the JavaScript proof of concept
 design/ workflow/ naming/ shipped/   the reference pages
@@ -57,6 +62,8 @@ admin/content/articles/*.md     the articles' sources, in the newsroom's format
 admin/build/pages.py            builds every hand-written page with one nav and footer (bodies in admin/content/pages/)
 admin/build/articles.py         builds articles/ from the sources; the gate for the writing rules
 admin/build/py_bundle.py        builds assets/py/aws_twin.zip; --check fails if it is stale
+admin/build/diagrams.js         renders admin/content/diagrams/*.mmd (Mermaid) to assets/diagrams/*.svg
+admin/build/check_cli.py        runs every AWS CLI command the pages print through the AWS CLI, against the twin
 admin/build/browser_tests.js    runs the Python tests in headless Chromium under Pyodide
 admin/build/test.js             the interface tests (node, no dependencies)
 admin/build/validate.js         the gate: version, canonical host, links, nav, twins, orphans, licence, name-watch, leak tripwire
@@ -79,9 +86,11 @@ python3 admin/build/py_bundle.py     # rebuild the browser bundle after changing
 node admin/build/browser_tests.js    # the Python tests in a browser (needs Playwright)
 node admin/build/test.js             # the same script against the memory and vault backends
 node admin/build/validate.js         # the site checks; CI runs all of these (.github/workflows/ci.yml)
+node admin/build/diagrams.js         # after editing a diagram (needs Playwright and cdn.jsdelivr.net)
+AWS_CLI=aws python3 admin/build/check_cli.py   # after editing a command on the IAM or sessions page
 ```
 
-No build step to serve, no dependency, no third-party script on the site's pages. The
+No build step to serve, no dependency, no third-party script on the site's pages (the diagrams are SVG, rendered when the site is built). The
 twin's code is UMD and runs unchanged in Node and in the browser. The one page that loads
 from elsewhere is the experiment under `articles/data/boto3-twin.html` (Pyodide from
 cdn.jsdelivr.net, boto3 from PyPI), which an article was written from.

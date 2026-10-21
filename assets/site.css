@@ -370,3 +370,12 @@ main.doc td.todo{color:var(--red);font-weight:700}
 .sess-status{margin-top:.8rem;font-size:.86rem;padding:.55rem .8rem;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:#34363c;overflow-wrap:anywhere}
 .sess-status.ok{border-color:rgba(15,118,110,.4);background:rgba(15,118,110,.06)}
 .sess-status.bad{border-color:rgba(185,28,28,.4);background:rgba(185,28,28,.05)}
+
+/* diagrams: SVG rendered at build time from Mermaid (admin/build/diagrams.js); the source sits under each */
+figure.diagram{margin:1.4rem 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem;box-shadow:var(--shadow)}
+figure.diagram img{display:block;width:100%;height:auto;max-height:760px;object-fit:contain}
+figure.diagram figcaption{font-size:.82rem;color:var(--dim);line-height:1.55;margin:.8rem .2rem 0}
+figure.diagram details{margin:.6rem .2rem 0;font-size:.78rem}
+figure.diagram summary{cursor:pointer;color:var(--accent-dk)}
+figure.diagram pre.mermaid-src{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.7rem .9rem;overflow:auto;font-size:.76rem;line-height:1.5;color:#24343f}
+.flow.six{grid-template-columns:repeat(auto-fit,minmax(132px,1fr));padding:0}

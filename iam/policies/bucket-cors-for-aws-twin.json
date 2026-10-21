@@ -1,0 +1,12 @@
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["https://aws.twin.sgit.ai"],
+      "AllowedMethods": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag", "x-amz-request-id", "x-amz-id-2", "x-amz-version-id", "x-amz-bucket-region",
+                        "x-amz-server-side-encryption", "x-amz-delete-marker", "Content-Range", "Last-Modified"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 # aws.twin.sgit.ai: one suite, two interpreters.
-#   python  : the Python twin's tests under pytest (CPython), and the browser bundle is up to date
+#   python  : the Python twin's tests under pytest (CPython), the browser bundle is up to date, the pages' CLI commands parse
 #   site    : the JavaScript proof of concept's tests, the generated pages are up to date, the site checks
 #   browser : the same Python tests in headless Chromium under Pyodide, with boto3 and OSBot-AWS from PyPI
 name: ci
@@ -25,6 +25,11 @@ jobs:
       - run: pip install boto3==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest
       - run: python -m pytest -q
       - run: python admin/build/py_bundle.py --check
+      - name: every AWS CLI command the pages print is one the CLI accepts
+        if: matrix.python == '3.13'
+        run: |
+          python -m venv /tmp/awscli && /tmp/awscli/bin/pip install -q awscli   # its own venv: awscli pins an older botocore
+          AWS_CLI=/tmp/awscli/bin/aws python admin/build/check_cli.py
 
   site:
     runs-on: ubuntu-latest

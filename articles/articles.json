@@ -1,5 +1,33 @@
 [
   {
+    "slug": "a-live-aws-session-from-a-browser-tab",
+    "url": "https://aws.twin.sgit.ai/articles/a-live-aws-session-from-a-browser-tab.html",
+    "markdown": "https://aws.twin.sgit.ai/articles/a-live-aws-session-from-a-browser-tab.md",
+    "title": "A live AWS session from a browser tab: Python in the page signed a request with my real Identity Center session, AWS answered, and no server of ours was in the path",
+    "date": "2026-10-21",
+    "author": "Dinis Cruz",
+    "author_url": "https://sgit.ai/about/",
+    "summary": "This morning the AWS twin was an idea in a newsroom article. By the evening I pasted a session from my own IAM Identity Center into a page on aws.twin.sgit.ai, pressed a button, and Python running inside the browser tab, boto3 under Pyodide with the twin's hook in front of it, signed a request with that session and sent it to AWS STS, which answered with my account, my role and my user. No backend, no proxy of ours, no credentials stored anywhere but the tab, for the session's hour. I think that is a major milestone, and this is why. It means the Python I have written for years, OSBot-AWS and OSBot-Utils, runs in a page against a real account; that the same code and the same tests run in CI against the twin; and that the twin sits in front of every call, so we see, record and choose where each one goes. The build agent then took it to S3: the S3 browser can go live, directly for STS and for buckets with a CORS rule, and through a small relay on my own machine for what S3 will not answer a browser, such as listing buckets. The relay holds no credentials and cannot make a request I did not sign. And because the session I checked was AdministratorAccess, it also wrote the page I needed next: least privilege for the twin, with IAM Identity Center permission sets that can only list bucket names, or read one bucket. Browsing my real buckets with a narrow role is the next thing I do.",
+    "version": "v0.4.0",
+    "tags": [
+      "aws",
+      "twins",
+      "python",
+      "pyodide",
+      "boto3",
+      "osbot-aws",
+      "s3",
+      "sts",
+      "cors",
+      "relay",
+      "iam-identity-center",
+      "least-privilege",
+      "milestone",
+      "article"
+    ],
+    "status": "published"
+  },
+  {
     "slug": "the-twin-is-python-now",
     "url": "https://aws.twin.sgit.ai/articles/the-twin-is-python-now.html",
     "markdown": "https://aws.twin.sgit.ai/articles/the-twin-is-python-now.md",
