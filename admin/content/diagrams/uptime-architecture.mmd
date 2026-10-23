@@ -1,0 +1,20 @@
+flowchart LR
+  subgraph browser["aws.twin.sgit.ai, in your browser"]
+    ui["The uptime page<br/>boto3 in Pyodide"]
+    key["Results key<br/>RSA-OAEP 4096<br/>private half stays here"]
+  end
+  subgraph aws["Your AWS account, one copy per region"]
+    rule["EventBridge rule<br/>rate(15 minutes)"]
+    fn["Lambda: aws-twin-uptime<br/>Node.js 22, one file,<br/>no dependencies"]
+    cf["CloudFront (optional)<br/>one hostname,<br/>a path per region"]
+  end
+  sites[("The websites<br/>being checked")]
+  lane[("sgit append lane<br/>dev.send.sgraph.ai<br/>write-only")]
+  ui -->|"deploy: IAM, Lambda,<br/>EventBridge, CloudFront"| aws
+  ui -->|"invoke now (IAM-signed)"| fn
+  rule -->|"scheduled event"| fn
+  cf -.->|"signed by your<br/>controller key"| fn
+  fn -->|"GET, timed"| sites
+  fn -->|"report, encrypted to<br/>the results key"| lane
+  lane -->|"list, fetch (enum key)"| ui
+  key -.->|"decrypt"| ui

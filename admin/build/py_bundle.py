@@ -19,7 +19,7 @@ def build():
             for folder, dirs, files in os.walk(os.path.join(ROOT, top)):
                 dirs[:] = sorted(d for d in dirs if d != '__pycache__')
                 for f in sorted(files):
-                    if f.endswith('.py'):
+                    if f.endswith(('.py', '.mjs')):                      # .mjs: the Lambda twin's Node.js harness, the uptime function
                         full = os.path.join(folder, f)
                         info = zipfile.ZipInfo(os.path.relpath(full, ROOT).replace(os.sep, '/'), date_time=(2026, 1, 1, 0, 0, 0))
                         info.compress_type = zipfile.ZIP_DEFLATED

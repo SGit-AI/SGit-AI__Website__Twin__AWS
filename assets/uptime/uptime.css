@@ -1,0 +1,20 @@
+/* the uptime page: the site's form styles (.sess, .tw-run) plus these */
+.up .sess label{display:flex;flex-direction:column;gap:.25rem;font-size:.8rem;color:var(--dim);font-weight:600}
+.up select{font:inherit;font-size:.86rem;padding:.35rem .5rem;border:1px solid var(--line2);border-radius:8px;background:#fff}
+.up .up-check{flex:0 0 auto}
+.up .up-check span{display:flex;gap:.35rem;align-items:center;color:var(--fg);font-weight:500}
+.up .up-inline{flex:0 0 auto}
+.up-regions{display:flex;flex-wrap:wrap;gap:.3rem 1rem;margin:.7rem 0}
+.up-grow{flex:1 1 auto}
+.up-note{font-size:.84rem;color:var(--dim);line-height:1.55;overflow-wrap:anywhere}
+.up-pill{display:inline-block;font-size:.78rem;font-weight:700;padding:.2rem .6rem;border-radius:99px;border:1px solid rgba(29,78,216,.3);background:rgba(29,78,216,.07);color:#1d4ed8}
+.up-pill.live{border-color:rgba(185,28,28,.4);background:rgba(185,28,28,.07);color:var(--red)}
+.up-table{width:100%;border-collapse:collapse;font-size:.84rem;margin:.6rem 0}
+.up-table th,.up-table td{border-bottom:1px solid var(--line);padding:.35rem .45rem;text-align:left;vertical-align:top}
+.up-table input{width:5.5rem}
+.up-log{max-height:340px;overflow:auto;min-height:3rem;margin-top:.7rem;white-space:pre-wrap}
+.up-ok{color:var(--accent-dk)}
+.up-down{color:var(--red);font-weight:600}
+.up-src pre{max-height:520px;overflow:auto;font-size:.74rem}
+@media (max-width:640px){.up .sess-row{flex-direction:column;align-items:stretch}}
+.up [hidden]{display:none !important}

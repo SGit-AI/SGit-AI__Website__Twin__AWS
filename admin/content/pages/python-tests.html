@@ -18,7 +18,12 @@
     loadTwinPython({ onStep: function (n, ms) { say('loaded ' + n + ' in ' + ms + ' ms'); } }).then(function (py) {
       status.textContent = 'running…';
       var t = performance.now();
-      var report = JSON.parse(py.runPython('import json\nfrom tests.browser_runner import run\njson.dumps(run())'));
+      // runPythonAsync, so a test can wait on JavaScript (the Lambda twin runs Node.js handlers through JSPI)
+      // the uptime tests make keys and decrypt reports with cryptography, Pyodide's own build of it: a test dependency only
+      return py.loadPackage(['cryptography']).catch(function () { say('cryptography did not load: the uptime tests that need keys will skip'); })
+        .then(function () { return py.runPythonAsync('import json\nfrom tests.browser_runner import run\njson.dumps(run())'); }).then(function (text) { return [py, t, JSON.parse(text)]; });
+    }).then(function (got) {
+      var py = got[0], t = got[1], report = got[2];
       report.ms = Math.round(performance.now() - t); report.timings = py.twinTimings;
       report.versions = JSON.parse(py.runPython('import json, sys, boto3, botocore, osbot_aws, osbot_utils, aws_twin\nfrom importlib.metadata import version\njson.dumps({"python": sys.version.split()[0], "boto3": boto3.__version__, "botocore": botocore.__version__, "osbot_aws": version("osbot-aws"), "osbot_utils": version("osbot-utils"), "aws_twin": aws_twin.__version__})'));
       tbody.innerHTML = report.results.map(function (r) { return '<tr><td><code>' + r.test + '</code></td><td class="' + (r.ok ? 'ok' : 'todo') + '">' + (r.ok ? 'passed' : 'failed: ' + r.error.replace(/</g, '&lt;')) + '</td><td>' + r.ms + '</td></tr>'; }).join('');

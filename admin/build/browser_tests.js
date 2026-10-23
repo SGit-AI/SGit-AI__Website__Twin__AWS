@@ -11,7 +11,7 @@ const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const ROOT = path.join(__dirname, '../..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.zip': 'application/zip', '.json': 'application/json', '.svg': 'image/svg+xml' };
-const ORIGIN = 'http://aws-twin.test';
+const ORIGIN = 'https://aws-twin.test';                  // https: a secure context, as the real site is (WebCrypto needs one)
 function serve(route) {
   const url = new URL(route.request().url());
   let f = path.join(ROOT, decodeURIComponent(url.pathname));

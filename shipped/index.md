@@ -1,10 +1,10 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/shipped/index.html, generated from the same source by admin/build/pages.py; site v0.4.0; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/shipped/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / status
 
 # Built, and designed
 
-The family's house rule: the build state leads, every designed thing is labelled as design, and the numbers carry the date they were measured. Measured 2026-10-21, at site v0.4.0, the first release.
+The family's house rule: the build state leads, every designed thing is labelled as design, and the numbers carry the date they were measured. Measured 2026-10-21, at site v0.4.1, the first release.
 
 ## 1. The table
 
@@ -20,6 +20,7 @@ The family's house rule: the build state leads, every designed thing is labelled
 | **The session slot**: paste in four formats, expiry, masking, refusal of long-lived keys | PoC, working | Session page; parsing and refusals tested |
 | **The JavaScript proof of concept's live backend**: its wire to AWS | designed | Refuses every call naming the SDK command; what wiring needs is [three listed things](../design/index.md#live). The Python twin's live route, below, is what reaches AWS |
 | **The Python twin's live route** from the browser: a pasted session, signed in the page; direct where AWS allows the origin, through [the local relay](../how-it-works/index.md#relay) where it does not | built; STS checked with a real session | The sessions page's check returned a real account, role and user; the S3 browser live against a stand-in for AWS behind the relay, ten browser checks; real-account S3 browsing not yet done |
+| **Uptime checks in every region**: a Node.js Lambda function, sgit-encrypted reports to an append lane, deployed with boto3; twins of Lambda, IAM roles, EventBridge, CloudFront and the append lane | built, in the twin | [The uptime page](../uptime/index.md); deploy, run, schedule and decrypt tested in CI and in the browser; not yet deployed to AWS ([phase 2](../uptime/plan.md#phases)) |
 | **Least-privilege guidance**: four S3 permission sets, the CLI, a policy simulator step | written, commands checked | [The IAM page](../iam/index.md); every command through the AWS CLI against the twin, in CI |
 | **CORS per service** from a browser | measured, no credentials | STS, Lambda, EC2, IAM, Logs, Cost Explorer and CloudFormation answer any origin with a preflight; S3 is blocked without a bucket rule. [The table, with the data beside it](../articles/boto3-in-the-browser.md#cors) |
 | **boto3 under Pyodide** against the twin | experiment, ran | Eleven SigV4-signed calls through one replaced transport, 10.0 s wall, 24.2 MB; one extra step, Pyodide's `ssl` package. [The brief](../articles/boto3-in-the-browser.md#boto3) |

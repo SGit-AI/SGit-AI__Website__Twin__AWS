@@ -7,7 +7,7 @@
 > defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
 > with localStorage as the vault.
 
-Site version: v0.4.0 (21 October 2026). Deployed to GitHub Pages from `dev` by
+Site version: v0.4.1 (23 October 2026). Deployed to GitHub Pages from `dev` by
 .github/workflows/deploy-pages.yml; every release is tagged vX.Y.Z by CI. Every page has a .md
 twin beside it (swap .html for .md). Briefs, in full: /briefs/index.html. What exists:
 /REALITY.md. Where the briefs were wrong, and departures from sgit.ai's repository guidance:
@@ -28,6 +28,16 @@ ListBuckets; read-only unless writes are allowed. Tested against a stand-in for 
 the relay and against real AWS with invented keys; browsing a real account's buckets has NOT
 been done yet. Step by step: /how-it-works/index.html. Least-privilege permission sets and
 the IAM Identity Center CLI: /iam/index.html (commands checked by the AWS CLI in CI).
+
+SINCE v0.4.1, UPTIME CHECKS, TWIN FIRST (/uptime/, plan at /uptime/plan.html). A Node.js 22 Lambda
+function (aws_twin/apps/uptime/handler/index.mjs, no dependencies) checks websites and appends each
+report, encrypted as sgit's envelope v2 (RSA-OAEP SHA-256 wrapping AES-256-GCM, as `sgit pki encrypt`
+writes it), to an sgit append lane. Uptime__Deploy (boto3) deploys it to any number of regions with an
+EventBridge schedule, optional function URLs (requests must be signed with a controller ECDSA P-256
+key) and optional CloudFront. Twins added: Lambda (runs the deployed code: Node.js via node in CI and
+JSPI in the browser, Python in process), IAM roles, EventBridge rules, CloudFront distributions, the
+sgit append lane, the internet a function reaches. Deployed and tested in the twin only; NOT yet
+deployed to AWS.
 
 THE JAVASCRIPT PROOF OF CONCEPT (/twin/) WORKS AGAINST A VAULT AND DOES NOT CALL AWS. The interface, the
 vault backend (localStorage, with commits), the memory backend, snapshots and diff, the
@@ -103,8 +113,8 @@ hook plus S3's REST-XML protocol (21 named operations, bucket configurations and
 tagging) and STS GetCallerIdentity, answered from a Python mirror of sg-vfs's provider
 contract (SGraph-AI__Tools). Routes per service: twin, live, replay; every request recorded;
 unimplemented services answer 501 NotImplemented by name. `with Twin():` in-process, or
-`python -m aws_twin --port 4566` with AWS_ENDPOINT_URL. The same 26 tests: pytest 24 pass, 2
-opt-in live; Pyodide in headless Chromium 18 pass, 8 skipped (sockets, site files, opt-in). OSBot-AWS 2.39.10 runs against
+`python -m aws_twin --port 4566` with AWS_ENDPOINT_URL. The same 36 tests: pytest 34 pass, 2
+opt-in live; Pyodide in headless Chromium 28 pass, 8 skipped (sockets, site files, opt-in). OSBot-AWS 2.39.10 runs against
 it unchanged in both. /s3/ is an S3 browser whose every button calls OSBot-AWS in Pyodide,
 persisted to IndexedDB through vendored sg-vfs. /sessions/ checks a pasted IAM Identity
 Center session against AWS STS from the browser (with invented keys, and since v0.4.0 with
@@ -141,6 +151,7 @@ data: /articles/articles.json. Markdown twin beside every article: /articles/<sl
 /sessions/             AWS sessions: IAM Identity Center setup, paste, live check, better methods measured
 /iam/                  least privilege: S3 permission sets (policies under /iam/policies/), the CLI, the simulator, CORS
 /how-it-works/         a live session step by step: the hook, the routes, CORS, the relay, the guard, with diagrams
+/uptime/               uptime checks in every region: deploy, run, read and decrypt, twin or account; /uptime/plan.html
 /python/               the Python twin; /python/tests.html runs its tests in the browser
 /twin/                 the JavaScript proof of concept (backend drop-down: vault, memory, live)
 /design/               interface, state document, vault backend, live backend, diff, graph, templates, tests

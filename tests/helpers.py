@@ -34,3 +34,25 @@ def skip(reason):
     except ImportError:
         raise Skipped(reason)
     pytest.skip(reason)
+
+
+def needs_node_runtime():
+    """Skip unless the Lambda twin can run Node.js handlers here: node on the PATH (CPython), or the
+    browser's JSPI with Python entered through runPythonAsync (Pyodide; checked by trying)."""
+    import shutil
+    if IN_BROWSER:
+        try:
+            import pyodide.ffi
+            if not hasattr(pyodide.ffi, 'run_sync'):
+                skip('this Pyodide has no run_sync')
+        except ImportError:
+            skip('no pyodide.ffi')
+        return
+    if not shutil.which('node'):
+        skip('no node on the PATH: the Lambda twin runs Node.js handlers with it')
+
+
+def skip_if_twin_unavailable(payload):
+    """In a browser without JSPI the twin reports Runtime.TwinUnavailable rather than run the handler."""
+    if isinstance(payload, dict) and payload.get('errorType') == 'Runtime.TwinUnavailable':
+        skip(payload.get('errorMessage', 'the twin cannot run Node.js here'))

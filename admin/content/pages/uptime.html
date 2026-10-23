@@ -1,0 +1,74 @@
+<main class="doc up">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / uptime</div>
+  <h1>Uptime checks from every region, with reports only a vault can read</h1>
+  <p class="lead">Deploy a Lambda function that checks whether websites are up, to as many AWS regions as you pick, on a schedule. Each report is encrypted to a public key and appended to an sgit vault's lane, which only the private key's holder can read. Everything here is boto3 running in this page: against the <b>twin</b> by default, so you can deploy, run, break and read it with no AWS account, and against your <b>account</b> with the session from <a href="../sessions/index.html">the sessions page</a>. The function is one Node.js file with no dependencies, the same file in the twin and on Lambda. <a href="plan.html">The plan, and why Node.js →</a></p>
+
+  <div class="sess up-mode">
+    <div class="sess-row"><span id="up-mode" class="up-pill">loading Python…</span><span class="up-grow"></span>
+      <button class="tw-run alt" type="button" id="up-twin" disabled>Use the twin</button>
+      <button class="tw-run alt" type="button" id="up-live" disabled>Use the account (session in this tab)</button></div>
+    <div id="up-mode-note" class="up-note">Python, boto3 and the twin load in this page (about 25 MB the first time).</div>
+  </div>
+
+  <h2 id="what">1. What to check, and where from</h2>
+  <div class="sess">
+    <label>Websites, one per line <small>http or https; at most 50; private addresses are refused by the function</small>
+      <textarea id="up-targets" rows="4" spellcheck="false">https://sgit.ai/
+https://aws.twin.sgit.ai/
+https://down.example/</textarea></label>
+    <div class="up-regions" id="up-regions"></div>
+    <div class="sess-row">
+      <label>Schedule<select id="up-schedule"><option>rate(5 minutes)</option><option selected>rate(15 minutes)</option><option>rate(1 hour)</option><option>rate(6 hours)</option></select></label>
+      <label class="up-check"><span><input type="checkbox" id="up-url"> A function URL per region</span><small>for requests signed by a controller key</small></label>
+      <label class="up-check"><span><input type="checkbox" id="up-cf"> CloudFront in front</span><small>one hostname, a path per region</small></label>
+    </div>
+    <label>Controller key, optional <small>an ECDSA P-256 public key (PEM; an sgit bundle's <code>sign</code> key): function URL requests must be signed by it</small>
+      <textarea id="up-controller" rows="2" spellcheck="false" placeholder="-----BEGIN PUBLIC KEY-----"></textarea></label>
+  </div>
+
+  <h2 id="where">2. Where the reports go</h2>
+  <div class="sess">
+    <div class="sess-row"><button class="tw-run alt" type="button" id="up-genkey">Make a results key in this browser</button>
+      <span class="up-note" id="up-keyinfo">RSA-OAEP 4096, as sgit's keys are. The private half is kept in this browser's IndexedDB, not exportable, and never sent anywhere.</span></div>
+    <label>Or the public key to encrypt to <small>an sgit public-key bundle (<code>sgit pki export</code>) or a PEM; then read the reports with <code>sgit pki decrypt</code></small>
+      <textarea id="up-pubkey" rows="3" spellcheck="false" placeholder='{"v": 1, "encrypt": "-----BEGIN PUBLIC KEY-----…", …}'></textarea></label>
+    <div id="up-lane-twin" class="up-note">In the twin, a lane is made for you on a twinned <code>dev.send.sgraph.ai</code>.</div>
+    <div id="up-lane-live" class="sess-row" hidden>
+      <label>Append server<input id="up-host" value="dev.send.sgraph.ai"></label>
+      <label>Vault id<input id="up-vault" autocomplete="off"></label>
+      <label>Append token <small>hex, registered as an anchor</small><input id="up-token" autocomplete="off"></label>
+      <label>Enum key <small>to read the lane back</small><input id="up-enum" autocomplete="off" type="password"></label>
+    </div>
+  </div>
+
+  <h2 id="internet">3. The twin's internet</h2>
+  <div class="sess" id="up-internet-box">
+    <p class="up-note">What each website answers when the function checks it from the twin. On AWS, the real sites answer.</p>
+    <table class="up-table" id="up-internet"><thead><tr><th>Website</th><th>Answers</th><th>Delay</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <h2 id="run">4. Deploy, run, read</h2>
+  <div class="sess">
+    <div class="sess-row">
+      <button class="tw-run" type="button" id="up-deploy" disabled>Deploy</button>
+      <label class="up-inline">Region<select id="up-region"></select></label>
+      <button class="tw-run alt" type="button" id="up-invoke" disabled>Run it now</button>
+      <button class="tw-run alt" type="button" id="up-fire" disabled>Let the schedule come round</button>
+      <button class="tw-run alt" type="button" id="up-read" disabled>Read the reports</button>
+      <span class="up-grow"></span>
+      <button class="tw-run alt" type="button" id="up-teardown" disabled>Tear it all down</button>
+    </div>
+    <table class="up-table" id="up-functions"><thead><tr><th>Region</th><th>Function</th><th>Invocations</th></tr></thead><tbody></tbody></table>
+    <pre class="shell up-log" id="up-log"></pre>
+  </div>
+
+  <h2 id="reports">5. The reports, decrypted here</h2>
+  <div id="up-reports" class="up-note">No reports read yet.</div>
+
+  <h2 id="code">The function</h2>
+  <p>One file, <code>index.mjs</code>, zipped and uploaded by boto3 as it is. <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/apps/uptime/handler/index.mjs">On GitHub</a>, and the <a href="https://github.com/SGit-AI/SGit-AI__Website__Twin__AWS/blob/dev/aws_twin/apps/uptime/Uptime__Deploy.py">deploy code</a> this page calls.</p>
+  <details class="up-src"><summary>Show index.mjs</summary><pre class="shell" id="up-source">loading…</pre></details>
+  <div class="pagenav"><a href="plan.html">← The plan</a><a href="../how-it-works/index.html">How it works →</a></div>
+</main>
+<script src="../assets/py/twin-pyodide.js"></script>
+<script src="../assets/uptime/uptime.js"></script>

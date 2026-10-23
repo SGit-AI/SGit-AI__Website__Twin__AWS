@@ -1,0 +1,80 @@
+<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / <a href="index.html">uptime</a> / plan</div>
+  <h1>The plan: an uptime check in every region, twin first, results only a vault can read</h1>
+  <p class="lead">A Lambda function that checks whether websites are up, deployed to as many regions as you choose, run on a schedule or on demand, and sending each report encrypted to a vault's public key through an sgit append lane. Built against the twin first, so it can be deployed, invoked, broken and read back in this browser with no AWS account, and then deployed to a real one with the same boto3 code. This page is the plan, written before the code; <a href="index.html">the uptime page</a> is the result.</p>
+
+  {{diagram uptime-architecture | The shape. The page deploys with boto3 from the browser, and can invoke a region on demand with the session's own IAM authority. Each region's function runs on an EventBridge schedule, checks the sites, encrypts a report to the results key, and appends it to a vault's lane, which only that key's owner can read. CloudFront is optional: one hostname in front of every region, for callers that sign requests with a controller key.}}
+
+  <h2 id="language">1. The language: Node.js 22, because of the cryptography</h2>
+  <p>The brief asks for pure Python or pure Node.js with no dependencies. Checking a website is easy in both. Encrypting the report is not: sgit's envelope is RSA-OAEP with SHA-256, wrapping a fresh AES-256-GCM key, read from <a href="https://sgit.ai/docs/pki.md">sgit's PKI page</a> and confirmed in the shipped CLI's source (<code>PKI__Crypto.hybrid_encrypt</code>, sgit-ai 0.24.0).</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Needed</th><th>Node.js 22 on Lambda</th><th>Python 3.13 on Lambda, standard library</th></tr></thead>
+    <tbody>
+      <tr><td>RSA-OAEP (SHA-256), AES-256-GCM</td><td class="ok">WebCrypto, built in</td><td class="todo">not in the standard library</td></tr>
+      <tr><td>ECDSA P-256 verify (a controller's signed request)</td><td class="ok">WebCrypto, built in</td><td class="todo">not in the standard library</td></tr>
+      <tr><td>HTTP with a timeout</td><td class="ok"><code>fetch</code>, <code>AbortSignal.timeout</code></td><td class="ok"><code>urllib</code></td></tr>
+      <tr><td>The same file running in the browser's twin</td><td class="ok">yes: WebCrypto and <code>fetch</code> are the browser's own APIs</td><td>yes, but without the cryptography</td></tr>
+    </tbody>
+  </table></div>
+  <p>Python's ways round the gap are each worse than a dependency: <code>ctypes</code> into the runtime's OpenSSL (works on Lambda, not in a browser, and brittle across OpenSSL versions), AES and RSA written by hand (custom cryptography, which sgit's own rule forbids: "no custom primitives"), or a Lambda layer carrying <code>cryptography</code> (a dependency). Node.js has all of it in WebCrypto, the same API the browser has, so <b>one file</b> runs on Lambda, in CI, and inside the twin in this page, and its output is checked against sgit's own decryption.</p>
+  <p>Measured on 23 October 2026 before deciding: a synchronous Python function in Pyodide, which is what the twin's Invoke is, can wait for an async JavaScript function that uses WebCrypto, through <code>run_sync</code> and the browser's JSPI, when the page enters Python with <code>callPromising</code>. Chromium 141 has JSPI. So the twin runs the deployed JavaScript in the browser; in CI it runs it with <code>node</code>. The twin also runs Python handlers, in process, so the choice stays reversible.</p>
+
+  <h2 id="function">2. The function</h2>
+  <p>One file, <code>index.mjs</code>, about 200 lines, no imports at all.</p>
+  <ul>
+    <li><b>Three ways in.</b> A <b>schedule</b> (an EventBridge rule, checks the configured targets); a direct <b>Invoke</b> (AWS has already checked the caller's IAM authority, so the event may name its own targets); and, optionally, a <b>function URL</b> whose requests must be signed by the <b>controller key</b>: an ECDSA P-256 public key in the function's configuration, the kind an sgit identity already has for signing. A request carries a timestamp and a signature over <code>timestamp + "\n" + body</code>, and is refused outside five minutes. The function never holds a private key.</li>
+    <li><b>The check.</b> A timed <code>GET</code> of each target, ten seconds at most, redirects followed: status, milliseconds, final URL, the error if it failed. Up means an answer below 400. At most 50 targets a call. Targets must be <code>http</code> or <code>https</code> and are refused when they name the machine itself or a private address, so a signed request cannot turn the function on its own runtime.</li>
+    <li><b>The report.</b> JSON: region, function, request id, when, the trigger, the results. Encrypted as sgit's envelope version 2: <code>{"v":2, "w": RSA-OAEP(aes key), "i": iv, "c": AES-256-GCM(report)}</code>, base64 of the JSON, which is what <code>sgit pki encrypt</code> writes.</li>
+    <li><b>The send.</b> <code>POST /api/vault/append/write/{vault_id}</code> with <code>{"append_token", "payload"}</code>, the payload base64 of the envelope text: encoded twice, as sgit's drainers expect. The answer is blind, <code>{"ok": true}</code>.</li>
+    <li><b>Its configuration</b>, in environment variables: the targets, the results public key (the <code>encrypt</code> PEM of an sgit bundle, or a PEM), the lane URL, the append token, the controller key. The append token is the one secret, and it is write-only: whoever reads it can add to the lane, not read it. Lambda's 4 KB limit on environment variables fits an RSA-4096 public key with room for targets.</li>
+  </ul>
+
+  <h2 id="twins">3. The twins it needs</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Twin</th><th>Operations</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>Lambda</b>, per region</td><td>CreateFunction, GetFunction, GetFunctionConfiguration, ListFunctions, UpdateFunctionCode, UpdateFunctionConfiguration, DeleteFunction, Invoke (RequestResponse, Event, DryRun, log tail), AddPermission, GetPolicy, RemovePermission, Create/Get/DeleteFunctionUrlConfig</td><td>Runs the deployed code: <code>nodejs*</code> through one harness file (node in CI, JSPI in the browser), <code>python*</code> in process. The function's outbound requests go to the twin's internet.</td></tr>
+      <tr><td><b>IAM</b>, roles only</td><td>CreateRole, GetRole, DeleteRole, Attach/Detach/ListAttachedRolePolicies, Put/Get/Delete/ListRolePolicies</td><td>The execution role the function needs; nothing else of IAM.</td></tr>
+      <tr><td><b>EventBridge</b>, per region</td><td>PutRule, DescribeRule, ListRules, Enable/DisableRule, DeleteRule, PutTargets, ListTargetsByRule, RemoveTargets</td><td>The twin can fire a rule on demand, which invokes its Lambda targets with a scheduled event.</td></tr>
+      <tr><td><b>CloudFront</b>, the minimum</td><td>CreateDistribution, GetDistribution, GetDistributionConfig, ListDistributions, UpdateDistribution, DeleteDistribution</td><td>ETags and <code>If-Match</code> as CloudFront has them, disable-before-delete. Deployed at once rather than after minutes.</td></tr>
+      <tr><td><b>The sgit append lane</b></td><td>write, and the owner's list and fetch</td><td>Not AWS: the server the function posts to, twinned so a report can be read back and decrypted in the page.</td></tr>
+      <tr><td><b>The internet</b></td><td>an answer per target</td><td>Up, down (a status), slow, or unreachable, set in the page. A target with no answer configured fails, by name.</td></tr>
+    </tbody>
+  </table></div>
+  {{diagram uptime-twin-invoke | One invocation in the twin. boto3's Invoke reaches the Lambda twin like any AWS call. The twin runs the deployed index.mjs through the harness, with fetch swapped for the twin's internet; the function encrypts its report with WebCrypto and posts it to the lane twin, which keeps it as the server would. The page then reads the lane and decrypts with the key that never left it.}}
+
+  <h2 id="deploy">4. The deployment, the same boto3 for the twin and the account</h2>
+  <ol>
+    <li><b>An execution role</b>, <code>aws-twin-uptime-lambda</code>: trusted by <code>lambda.amazonaws.com</code>, with <code>AWSLambdaBasicExecutionRole</code> for its logs. Nothing else: the function calls no AWS API.</li>
+    <li><b>In each region</b>: package <code>index.mjs</code> as a zip (in Python, in the page); create the function, or update its code and configuration; wait until it is active; put the EventBridge rule, its target, and the permission for <code>events.amazonaws.com</code> to invoke it.</li>
+    <li><b>Optionally</b>, a function URL with its permission, and one CloudFront distribution with an origin per region and a path per region (<code>/eu-west-2/*</code>), caching off.</li>
+    <li><b>Teardown</b>, the same steps backwards, so a test deploy leaves nothing behind.</li>
+  </ol>
+  <p>A new IAM role takes seconds to become usable by Lambda; the first CreateFunction can be refused for that, and the page retries rather than blocking the browser.</p>
+
+  <h2 id="ui">5. Testing it from the page</h2>
+  <ul>
+    <li><b>Twin mode</b>, the default: choose regions and targets, set what the twin's internet answers for each, generate a results key in the browser (RSA-OAEP 4096, the private half never leaves the tab), deploy, invoke a region or fire the schedule, and read the decrypted reports.</li>
+    <li><b>Live mode</b>: the session pasted on <a href="../sessions/index.html">the sessions page</a>; the same deploy against the account; the reports go to a real append lane, and the page reads them back with the lane's enum key, which the append server allows from a browser. Every write is behind an explicit button.</li>
+  </ul>
+
+  <h2 id="phases">6. Phases</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>What</th><th>Done when</th></tr></thead>
+    <tbody>
+      <tr><td><b>1</b>, this release</td><td>The five twins, the function, the deploy code, the page, the tests: the function's envelope decrypted by sgit's own construction in CI</td><td>Deploy, invoke, fire and decrypt work in the twin, in CI and in the browser</td></tr>
+      <tr><td><b>2</b></td><td>The first live deploy to a test account and a test lane, one region, then several</td><td>A scheduled report from a real region arrives and decrypts</td></tr>
+      <tr><td><b>3</b></td><td>Function URLs and CloudFront live; the twin answering function URL and CloudFront hosts; signed reports; certificate expiry; content checks; the append token derived from the public key once sgit ships that</td><td>Each is measured live before it is claimed</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="risks">7. What to watch</h2>
+  <ul>
+    <li><b>Lanes fill up.</b> A lane holds 1,000 pending files per token. Every 15 minutes is 96 reports a day per region, so five regions fill a lane in two days unless reports are drained (fetched and marked processed). The page drains what it reads; a schedule is a choice of how often to read too.</li>
+    <li><b>The append routes are on dev.send.sgraph.ai only</b> (sgit.ai, checked 10 October 2026).</li>
+    <li><b>Reports are not signed yet.</b> The lane says who holds the token, not who wrote the report. A per-deployment signing key is phase 3.</li>
+    <li><b>Function URLs with no IAM auth are public endpoints.</b> The controller signature is the only gate, and AWS's rules for public function URLs have changed before: verify the permission set-up at first live use.</li>
+    <li><b>The twin's internet is configured, not measured.</b> What a site really answers from a region is what phase 2 is for.</li>
+  </ul>
+  <div class="pagenav"><a href="../how-it-works/index.html">← How it works</a><a href="index.html">The uptime page →</a></div>
+</main>

@@ -13,7 +13,9 @@ recorded), or 'replay' (answered from a recording). The default is twin for ever
 A live route goes straight to AWS, or through the local relay (Twin__Relay.py) when live_relay is set:
 the relay holds no credentials and adds the CORS headers a browser needs for services, such as S3's
 ListBuckets, that do not answer a page.
-Services the twin does not have answer 501 NotImplemented with the operation named, so
+Services: S3, STS GetCallerIdentity, IAM roles, Lambda (running the deployed code), EventBridge
+rules, CloudFront distributions; outside AWS, the internet a function reaches and sgit's append
+lanes. Services the twin does not have answer 501 NotImplemented with the operation named, so
 a gap is visible in the traffic, never a silent success."""
 import json
 import os
@@ -23,7 +25,13 @@ import time
 
 from aws_twin.core.Twin__Http             import Twin__Request, Twin__Response
 from aws_twin.core.Twin__Traffic          import Twin__Traffic
+from aws_twin.awslambda.Lambda__Twin      import Lambda__Twin
+from aws_twin.cloudfront.CloudFront__Twin import CloudFront__Twin
+from aws_twin.events.Events__Twin         import Events__Twin
+from aws_twin.iam.IAM__Twin               import IAM__Twin
+from aws_twin.internet.Twin__Internet     import Twin__Internet
 from aws_twin.s3.S3__Twin                 import S3__Twin
+from aws_twin.sgit.Append_Lane__Twin      import Append_Lane__Twin
 from aws_twin.sts.STS__Twin               import STS__Twin
 from aws_twin.vfs.Vfs__Provider__Memory   import Vfs__Provider__Memory
 
@@ -44,7 +52,10 @@ class Twin:
         self.routes            = dict(routes or {})                    # service -> 'twin' | 'live' | 'replay'
         self.replay            = replay
         self.traffic           = Twin__Traffic(keep_bodies=keep_bodies)
-        self.services          = {'s3': S3__Twin(self), 'sts': STS__Twin(self)}
+        self.services          = {'s3': S3__Twin(self), 'sts': STS__Twin(self), 'iam': IAM__Twin(self), 'lambda': Lambda__Twin(self),
+                                  'events': Events__Twin(self), 'cloudfront': CloudFront__Twin(self)}
+        self.internet          = Twin__Internet(self.vfs)                # what a twinned function's outbound requests get
+        self.append_lanes      = Append_Lane__Twin(self.vfs)            # sgit's append lanes, which functions post reports to
         self.set_credentials   = set_credentials
         self.live_relay        = live_relay                            # e.g. http://127.0.0.1:4567: live calls go through Twin__Relay.py
         self._saved_send       = None

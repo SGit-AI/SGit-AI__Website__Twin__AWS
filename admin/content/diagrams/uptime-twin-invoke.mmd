@@ -1,0 +1,25 @@
+sequenceDiagram
+  autonumber
+  participant UI as Uptime page (JavaScript)
+  participant PY as boto3 (Python in the tab)
+  participant LT as Lambda__Twin
+  participant H as node_harness.mjs
+  participant FN as index.mjs, the deployed code
+  participant W as The twin's internet
+  participant AL as Append lane twin
+  UI->>PY: invoke(region) via callPromising
+  PY->>LT: POST /functions/aws-twin-uptime/invocations (signed)
+  LT->>H: run the zip's index.mjs with the event and env
+  Note over LT,H: in the browser, run_sync (JSPI) awaits the async import<br/>in CI, node runs as a subprocess: the same harness file
+  H->>FN: handler(event, context), fetch swapped for the twin's
+  FN->>W: GET each target
+  W-->>FN: the answer configured for it (up, down, slow, error)
+  FN->>FN: report, then the sgit v2 envelope (WebCrypto)
+  FN->>AL: POST /api/vault/append/write/vault
+  AL-->>FN: {"ok": true}
+  FN-->>H: summary
+  H-->>LT: result, logs, the requests it made
+  LT->>AL: keep the payload, as the server would
+  LT-->>PY: 200, the payload botocore expects
+  PY-->>UI: summary, traffic
+  UI->>UI: fetch the lane, decrypt with the key in the tab

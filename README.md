@@ -18,11 +18,15 @@ service sends chosen calls on to the real account with a pasted session; the ses
 (`sessions/`) checks one against AWS STS from the browser, and since v0.4.0 the S3 browser goes
 live, directly or through a one-file local relay (`aws_twin/core/Twin__Relay.py`) for what S3
 will not answer a browser. `how-it-works/` explains the live path step by step; `iam/` is the
-least-privilege guidance. The first, JavaScript proof of concept is still at `twin/`.
+least-privilege guidance. Since v0.4.1 the twin also has IAM roles, Lambda (running the deployed code),
+EventBridge, CloudFront and sgit's append lane, and `uptime/` deploys an uptime-check function to many
+regions with boto3 (`aws_twin/apps/uptime/`), against the twin or an account. The first, JavaScript
+proof of concept is still at `twin/`.
 
 ```sh
 pip install boto3 osbot-aws osbot-utils pytest
-python -m pytest                     # 24 pass; AWS_TWIN_LIVE_TESTS=1 adds live STS and S3 calls with invented keys
+pip install cryptography             # test-only: the uptime tests decrypt reports as sgit does
+python -m pytest                     # 34 pass (node on the PATH runs the Node.js functions); AWS_TWIN_LIVE_TESTS=1 adds live calls
 python aws_twin/core/Twin__Relay.py  # the local relay, for the S3 browser's live mode (127.0.0.1:4567)
 python -m aws_twin --port 4566       # the twin as a local endpoint: export AWS_ENDPOINT_URL=http://127.0.0.1:4566
 ```
@@ -46,6 +50,8 @@ s3/index.html                   the S3 browser: Python behind every button
 sessions/index.html             AWS sessions: setup, paste, a live check, better methods measured
 iam/index.html  iam/policies/   least privilege: S3 permission sets, the CLI, the bucket CORS rule
 how-it-works/index.html         the live path step by step, with diagrams
+uptime/index.html  plan.html    uptime checks in every region: the page, and the plan written before it
+aws_twin/apps/uptime/           the uptime function (handler/index.mjs, Node.js 22) and Uptime__Deploy.py
 python/index.html  tests.html   the Python twin, and its tests in the browser
 twin/index.html                 the JavaScript proof of concept
 design/ workflow/ naming/ shipped/   the reference pages
@@ -86,6 +92,7 @@ python3 admin/build/py_bundle.py     # rebuild the browser bundle after changing
 node admin/build/browser_tests.js    # the Python tests in a browser (needs Playwright)
 node admin/build/test.js             # the same script against the memory and vault backends
 node admin/build/validate.js         # the site checks; CI runs all of these (.github/workflows/ci.yml)
+node admin/build/uptime_page_test.js # the uptime page end to end against the twin (needs Playwright)
 node admin/build/diagrams.js         # after editing a diagram (needs Playwright and cdn.jsdelivr.net)
 AWS_CLI=aws python3 admin/build/check_cli.py   # after editing a command on the IAM or sessions page
 ```
@@ -97,7 +104,8 @@ cdn.jsdelivr.net, boto3 from PyPI), which an article was written from.
 
 ## Release
 
-Every push to `dev` is a release, deployed to GitHub Pages and tagged by
+Every push to `dev` is a minor release (v0.4.1, v0.4.2) and every push to `main` a major one
+(v0.5.0); the workflow refuses any other bump. Each is deployed to GitHub Pages and tagged by
 `.github/workflows/deploy-pages.yml` (copied from the twins hub): the gate runs, the commit
 subject must read `site vX.Y.Z: ...` and agree with `admin/build/version.txt`, the commit is
 tagged `vX.Y.Z`, and the tree is published to https://aws.twin.sgit.ai.

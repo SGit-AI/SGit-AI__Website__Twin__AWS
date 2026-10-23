@@ -10,12 +10,14 @@
 #                     release: no tag, no publish. It also runs on pull requests.
 #                     The same Python tests in a browser run in ci.yml, not here: they
 #                     need PyPI and a CDN, and a release must not wait on either.
-#   2. tag-release  — every push to dev is a minor release and ends tagged
-#                     v{release}.{major}.{minor}. The version is owned by
+#   2. tag-release  — every push to dev is a minor release, every push to main a
+#                     major one, each tagged v{release}.{major}.{minor}: dev only
+#                     ever bumps the minor (v0.4.1, v0.4.2), main only the major
+#                     (v0.5.0), as Dinis Cruz set on 23 October 2026. The version is owned by
 #                     admin/build/version.txt (bumped exactly once per release) and
 #                     must also appear in the release commit's subject
 #                     ("site vX.Y.Z: ..."). CI verifies the two agree and that the
-#                     bump is the next minor (or a deliberate major), then tags the
+#                     bump is the one the branch allows, then tags the
 #                     release commit. First run backfills tags for any historical
 #                     release from the commit subjects.
 #   3. deploy       — publishes the tagged commit. Runs on manual dispatch even
@@ -23,9 +25,8 @@
 name: deploy-pages
 on:
   push:
-    # dev is the release branch: validate -> tag -> deploy. A push to main is
-    # deploy-only (tag-release skips), so main can serve as a deploy test or
-    # fallback while the github-pages environment still restricts dev.
+    # dev and main both release: validate -> tag -> deploy. dev releases are
+    # minors, main releases majors (the tag job enforces which).
     branches: [dev, main]
   pull_request:
     branches: [dev, main]
@@ -52,9 +53,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - uses: actions/setup-node@v4                     # the Lambda twin runs Node.js functions with node
+        with:
+          node-version: '22'
       - name: The Python twin's tests, and the browser bundle is current
         run: |
-          pip install --quiet boto3==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest
+          pip install --quiet boto3==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest cryptography
           python -m pytest -q
           python admin/build/py_bundle.py --check
 
@@ -62,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [validate]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     permissions:
       contents: write
     steps:
@@ -130,16 +134,17 @@ jobs:
             exit 1
           fi
 
-          # Every push to dev is a minor: the new tag must be the next minor
-          # after the previous latest (or a deliberate major/release bump to .0).
+          # dev releases minors and main releases majors: the new tag must be the
+          # next minor (dev) or the next major (main) after the previous latest.
           # `|| true` catches the very first release, where grep -v empties the
           # pipe and would otherwise kill the job under pipefail.
           PREV=$(git tag --list 'v*' | grep -v "^$TAG$" | sort -V | tail -1 || true)
           if [ -n "$PREV" ]; then
             NEXT_MINOR=$(echo "$PREV" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
             NEXT_MAJOR=$(echo "$PREV" | awk -F. '{split($1,a,"v"); printf "v%s.%d.0", a[2], $2+1}')
-            if [ "$TAG" != "$NEXT_MINOR" ] && [ "$TAG" != "$NEXT_MAJOR" ]; then
-              echo "::error::latest tag is $PREV; expected $NEXT_MINOR (minor) or $NEXT_MAJOR (major), got $TAG"
+            if [ "$GITHUB_REF_NAME" = "main" ]; then WANT=$NEXT_MAJOR; KIND=major; else WANT=$NEXT_MINOR; KIND=minor; fi
+            if [ "$TAG" != "$WANT" ]; then
+              echo "::error::latest tag is $PREV; a push to $GITHUB_REF_NAME is a $KIND release, so expected $WANT, got $TAG"
               exit 1
             fi
           fi
