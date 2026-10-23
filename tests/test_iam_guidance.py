@@ -38,7 +38,7 @@ def test_policy_files_are_policies():
         if name.startswith('s3-') and name != 's3-list-bucket-names.json':
             assert 'BUCKET_NAME' in text, name
     _, listing = _policy('s3-list-bucket-names.json')
-    assert [a for st in listing['Statement'] for a in st['Action']] == ['s3:ListAllMyBuckets', 's3:GetBucketLocation']   # names only
+    assert [a for st in listing['Statement'] for a in st['Action']] == ['s3:ListAllMyBuckets', 's3:GetBucketLocation', 'cloudformation:ListResources']   # names only: Cloud Control lists, S3's permission decides what
     _, read = _policy('s3-read-one-bucket.json')
     writes = {'s3:PutObject', 's3:DeleteObject', 's3:DeleteBucket', 's3:PutBucketPolicy', 's3:PutBucketCORS'}
     assert not writes & {a for st in read['Statement'] for a in (st['Action'] if isinstance(st['Action'], list) else [st['Action']])}

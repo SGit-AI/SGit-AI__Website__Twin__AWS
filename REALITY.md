@@ -1,4 +1,4 @@
-# Reality: what exists on aws.twin.sgit.ai, at v0.4.1 (23 October 2026)
+# Reality: what exists on aws.twin.sgit.ai, at v0.4.2 (23 October 2026)
 
 The rule, from the SG/Send repository's Librarian: a feature that is not in this file does not exist, and nobody
 may say a thing works because a brief describes it. Kept current by whoever ships. Content CC BY 4.0.
@@ -12,21 +12,28 @@ may say a thing works because a brief describes it. Kept current by whoever ship
 | **Versioning** | `admin/build/version.txt`, the badge on every page, `assets/version.js`, the release history, tags made by CI from v0.3.1 (v0.1.0 to v0.3.0 tagged in the build agent's clone only; pushing them was refused, so a maintainer must) |
 | **The gate** | `admin/build/validate.js` (version agreement, canonical host, links, nav, twins, licence stamps, name-watch, leak tripwire, diagrams rendered from their current source) plus the JavaScript tests, pytest and the bundle check, in the deploy workflow before any tag |
 | **The Python twin** | `aws_twin/`: S3's REST-XML protocol and STS GetCallerIdentity over a Python mirror of sg-vfs, a botocore hook with twin, live and replay routes, a local endpoint, traffic recording. Since v0.4.1 also IAM roles, Lambda (running Node.js functions through `node_harness.mjs`, with node in CPython and JSPI in the browser, and Python functions in process), EventBridge rules, CloudFront distributions, the sgit append lane, and the internet a function reaches |
-| **Tests** | 36 plain-function tests: pytest 34 pass, 2 opt-in live; under Pyodide in headless Chromium 28 pass, 8 skipped (sockets, site files, opt-in), including the uptime function run in the browser and its reports decrypted there. `admin/build/uptime_page_test.js`: the uptime page end to end, 11 checks. CI runs both (`ci.yml`), and `admin/build/check_cli.py` runs every AWS CLI command the IAM and sessions pages print through the AWS CLI against the twin |
+| **Tests** | 43 plain-function tests: pytest 41 pass, 2 opt-in live; under Pyodide in headless Chromium 35 pass, 8 skipped (sockets, site files, opt-in), including the uptime function run in the browser and its reports decrypted there. `admin/build/uptime_page_test.js`: the uptime page end to end, 11 checks. CI runs both (`ci.yml`), and `admin/build/check_cli.py` runs every AWS CLI command the IAM and sessions pages print through the AWS CLI against the twin |
 | **OSBot-AWS against the twin** | Its S3 helpers and STS caller identity, unchanged, in CPython and in the browser, pinned at 2.39.10 |
-| **The S3 browser** | `/s3/`: every button an OSBot-AWS call in Pyodide; buckets in IndexedDB through vendored sg-vfs |
+| **The console** | `/console/`: a page per service (Overview, S3, Lambda, All resources, Calls, Twin data), twin or live switched top left, the region, and a request pane: every call and request with headers and bodies (the session token masked), a replay into the call editor, and for a live read what the twin would answer. Twin state in IndexedDB through vendored sg-vfs, shared by every page. `aws_twin/web/Console.py`, `assets/console/`. Tested end to end in headless Chromium (`admin/build/console_test.js`, 22 checks) |
+| **Lambda in the console** | Per region and a scan of every region; configuration, environment (hidden until asked), triggers, function URL, tags, code (the twin's; live, a download link: AWS's code bucket has no CORS), test invoke, logs (the twin's record; live, CloudWatch Logs), permissions. Not yet used against a real account |
+| **S3 in the console** | The S3 browser, moved in (`/s3/` redirects). Live, buckets are listed through Cloud Control |
+| **What works where** | `/console/calls.html` and `assets/console/call-matrix.json`: 34 operations, 25 services, measured with invented keys five ways (AWS CLI, boto3, boto3 under Pyodide, the AWS SDK for JavaScript 3.1147.0, the twin). Outside a browser all reach AWS; in a browser only s3.ListBuckets, and S3 bucket calls without a CORS rule, are blocked, for both libraries. A call editor for any operation of any boto3 service |
 | **The sessions page** | `/sessions/`: setup steps, paste, a live STS check from the browser; verified with invented keys, and on 21 October 2026 with Dinis Cruz's real Identity Center session (account, role, user returned); measured CORS for other sign-in methods |
 | **Live S3 in the S3 browser** | `/s3/#/live`: the session from the same tab; directly for buckets with a CORS rule for this origin, through the local relay for the rest and for ListBuckets; read-only unless writes are allowed; tested in headless Chromium against the twin's server standing in for AWS behind the relay (10 checks), and with invented keys against real AWS |
+| **The Cloud Control twin** | ListResources and GetResource for S3 buckets (every region's), Lambda functions, IAM roles, EventBridge rules, CloudFront distributions |
 | **The local relay** | `aws_twin/core/Twin__Relay.py`: stdlib, one file, 127.0.0.1:4567, this origin only, `https://*.amazonaws.com` only, no credentials, one log line per request; served at `/aws_twin/core/Twin__Relay.py` |
 | **Least-privilege guidance** | `/iam/`: four S3 permission sets as files under `/iam/policies/`, the TwinReader policy, the bucket CORS rule; the IAM Identity Center CLI, checked by the AWS CLI |
 | **How it works** | `/how-it-works/`: the live path step by step, six diagrams (a seventh on `/iam/`) written in Mermaid (`admin/content/diagrams/`) and rendered to SVG by `admin/build/diagrams.js` |
 | **Uptime checks** | `aws_twin/apps/uptime/`: `handler/index.mjs` (Node.js 22, no dependencies: checks, sgit envelope v2 via WebCrypto, append write, controller-signed function URL requests) and `Uptime__Deploy.py` (boto3: role, function, schedule, function URL, CloudFront, teardown, any number of regions). `/uptime/`: deploy, run, fire, read and decrypt, in the twin or the account. The envelope is decrypted by sgit-ai 0.24.0's own `hybrid_decrypt` (checked once) and by its construction in CI |
 | **The JavaScript proof of concept** | `/twin/`: the first, SDK-shaped twin over localStorage, its 214 assertions |
 | **Articles** | Four, in the newsroom's format: two by the build agent, two from Dinis Cruz's memos |
-| **The briefs** | Seven, published in full under `/briefs/` |
+| **The briefs** | Eight, published in full under `/briefs/` |
 
 ## Does not exist
 
+- The console against a real account: the Lambda page, All resources and the call editor have run against the twin and, for the probes, against AWS with invented keys only.
+- The twin in a vault: planned (`/console/plan.html#vault`), not built.
+- A fast start for each console page: Python starts again on every page, about 15 seconds from the cache.
 - The S3 browser against a real account's buckets. A real session has been checked against STS only; S3 has been tested against a stand-in and with invented keys.
 - A recording of a live session replayed against the twin.
 - The uptime function on AWS. Deployed only to the twin; a first live deploy, and the function URL and CloudFront paths, are phases 2 and 3.

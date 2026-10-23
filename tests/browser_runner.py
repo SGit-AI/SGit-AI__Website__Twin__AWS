@@ -4,7 +4,7 @@ import importlib
 import time
 import traceback
 
-MODULES = ['tests.test_vfs', 'tests.test_s3_twin', 'tests.test_osbot_aws', 'tests.test_server_and_replay', 'tests.test_live_route', 'tests.test_relay', 'tests.test_iam_guidance', 'tests.test_twin_services', 'tests.test_uptime']
+MODULES = ['tests.test_vfs', 'tests.test_s3_twin', 'tests.test_osbot_aws', 'tests.test_server_and_replay', 'tests.test_live_route', 'tests.test_relay', 'tests.test_iam_guidance', 'tests.test_twin_services', 'tests.test_uptime', 'tests.test_console']
 
 
 def run(modules=None):

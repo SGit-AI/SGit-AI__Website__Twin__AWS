@@ -31,12 +31,13 @@
   "Statement": [
     { "Sid": "SeeTheBucketNamesAndNothingElse",
       "Effect": "Allow",
-      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation"],
+      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation", "cloudformation:ListResources"],
       "Resource": "*" }
   ]
 }</pre>
   <p>Notes that matter in practice:</p>
   <ul>
+    <li><b>Why <code>cloudformation:ListResources</code>.</b> A browser cannot call S3's ListBuckets (it sends no CORS headers), so the console lists buckets through the Cloud Control API, which answers a page. Cloud Control checks both permissions: its own, and the S3 one (<code>s3:ListAllMyBuckets</code>) for what it lists. On its own it reveals nothing: listing any other resource type still needs that type's own permissions.</li>
     <li><b>Bucket-level and object-level actions take different ARNs.</b> <code>s3:ListBucket</code> is granted on <code>arn:aws:s3:::BUCKET_NAME</code>; <code>s3:GetObject</code> on <code>arn:aws:s3:::BUCKET_NAME/*</code>. Mixing them up is the most common reason a "read" policy reads nothing.</li>
     <li><b>Hiding the other buckets' names</b>: drop the <code>SeeTheBucketNames</code> statement from the read recipes. The S3 browser then cannot list buckets, and you open yours by name instead (its <b>Open a bucket by name</b> form).</li>
     <li><b>The folder recipe</b> follows AWS's own home-folder pattern: listing is allowed for the prefixes <code>""</code>, <code>FOLDER/</code> and <code>FOLDER/*</code>, so the bucket's top-level names are visible and nothing below another folder is. The S3 browser sends <code>prefix=</code> at a bucket's root, as the S3 console does, so the condition matches.</li>
@@ -141,7 +142,7 @@ aws iam simulate-custom-policy --policy-input-list file://s3-read-one-folder.jso
   <ol>
     <li>Sign in to the access portal as the narrow user (or as yourself), pick the account, and pick <b>S3-List-Bucket-Names</b>, not AdministratorAccess. Choose <b>Access keys</b> and copy any block.</li>
     <li>Paste it on <a href="../sessions/index.html">the sessions page</a> and press <b>Check it against AWS</b>. The ARN should name <code>AWSReservedSSO_S3-List-Bucket-Names_…</code>.</li>
-    <li>In the same tab, open <a href="../s3/index.html#/live">the S3 browser's Live session view</a>. To list buckets, start the relay (<a href="../how-it-works/index.html#relay">what it is</a>) and tick <b>Use the local relay</b>; allow the browser's local-network prompt. Press <b>Go live</b>.</li>
+    <li>In the same tab, open <a href="../console/s3.html">the console's S3 page</a> and press <b>Live</b>, top left, then <b>Go live</b>. Buckets are listed through Cloud Control, from the browser; opening one needs its CORS rule (section 7), or the local relay (<a href="../how-it-works/index.html#relay">what it is</a>).</li>
     <li>What each recipe should show:</li>
   </ol>
   <div class="tablewrap"><table>

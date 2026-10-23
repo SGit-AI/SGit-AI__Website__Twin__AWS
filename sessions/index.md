@@ -1,4 +1,4 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/sessions/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/sessions/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / sessions
 
@@ -102,7 +102,7 @@ The plan, in order: paste (built), then a Cognito identity pool with one role pe
 - **Never in a file, a commit or a page.** The site's validator fails the build on anything shaped like a key.
 - **The code that holds it is versioned.** The version in the nav names the copy of this page you trusted, and [the release history](../admin/versions.md) says what changed in each.
 
-[← The S3 browser](../s3/index.md)[The Python twin →](../python/index.md)
+[← The console](../console/index.md)[The Python twin →](../python/index.md)
 
 ---
 

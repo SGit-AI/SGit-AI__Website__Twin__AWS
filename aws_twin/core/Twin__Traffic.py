@@ -11,6 +11,7 @@ class Twin__Traffic:
         self.keep_bodies = keep_bodies
         self.limit       = limit
         self._seq        = 0
+        self.pending_api = None                                        # set by the twin's hook: the boto3-level call being made
 
     def record(self, request, response, service, operation, target, started):
         self._seq += 1
@@ -27,6 +28,8 @@ class Twin__Traffic:
                               'body_bytes': len(request.body), 'body_sha256': request.body_sha256()},
                'status'    : response.status,
                'response'  : {'headers': dict(response.headers), 'body_bytes': len(response.body)}}
+        if self.pending_api:
+            rec['api'] = self.pending_api                                  # service, operation, region, params: enough to replay it
         if self.keep_bodies:
             rec['request' ]['body_b64'] = base64.b64encode(request.body ).decode()
             rec['response']['body_b64'] = base64.b64encode(response.body).decode()

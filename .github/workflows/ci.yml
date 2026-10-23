@@ -2,7 +2,7 @@
 #   python  : the Python twin's tests under pytest (CPython), the browser bundle is up to date, the pages' CLI commands parse
 #   site    : the JavaScript proof of concept's tests, the generated pages are up to date, the site checks
 #   browser : the same Python tests in headless Chromium under Pyodide, with boto3 and OSBot-AWS from PyPI,
-#             and the uptime page end to end against the twin
+#             and the uptime page and the console end to end against the twin
 name: ci
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4                           # the Lambda twin runs Node.js functions with node
         with:
           node-version: '22'
-      - run: pip install boto3==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest cryptography   # cryptography: the tests decrypt reports as sgit does; the twin needs none
+      - run: pip install boto3==1.43.116 botocore==1.43.116 osbot-utils==3.75.0 osbot-aws==2.39.10 pytest cryptography   # cryptography: the tests decrypt reports as sgit does; the twin needs none
       - run: python -m pytest -q
       - run: python admin/build/py_bundle.py --check
       - name: every AWS CLI command the pages print is one the CLI accepts
@@ -65,6 +65,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: REPORT=browser-report.json node admin/build/browser_tests.js
       - run: node admin/build/uptime_page_test.js
+      - run: node admin/build/console_test.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:

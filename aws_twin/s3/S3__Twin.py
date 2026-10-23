@@ -235,14 +235,18 @@ class S3__Twin:
     def create_bucket(self, request, bucket):
         if not BUCKET_NAME.match(bucket) or '..' in bucket or re.match(r'^\d+\.\d+\.\d+\.\d+$', bucket):
             raise S3__Error(400, 'InvalidBucketName', 'The specified bucket is not valid.', BucketName=bucket)
-        region = self.region_of(request)
+        region = endpoint = self.region_of(request)
+        wanted = None
         if request.body.strip():
             try:
                 lc = parse(request.body).find('LocationConstraint')
             except Exception:
                 raise S3__Error(400, 'MalformedXML', 'The XML you provided was not well-formed')
             if lc is not None and lc.text:
-                region = lc.text
+                wanted = region = lc.text
+        if endpoint != 'us-east-1' and wanted != endpoint:                  # as S3: a regional endpoint creates only its own region's buckets
+            raise S3__Error(400, 'IllegalLocationConstraintException',
+                            f'The {wanted + " " if wanted else "unspecified "}location constraint is incompatible for the region specific endpoint this request was sent to.')
         if self.vfs.exists(self._bucket_path(bucket)):
             if region == 'us-east-1':                                       # AWS answers 200 there, 409 elsewhere
                 return self._ok(request, {'location': f'/{bucket}'})

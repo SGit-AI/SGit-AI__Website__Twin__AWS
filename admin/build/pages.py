@@ -38,9 +38,20 @@ def nav(p):
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
-      <a class="nl" href="{p}s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <a class="nl" href="{p}console/index.html">Console<span class="caret">&#9662;</span></a>
       <div class="sub">
-      <a class="sl" href="{p}s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="{p}console/index.html">Overview</a>
+      <a class="sl" href="{p}console/s3.html">S3</a>
+      <a class="sl" href="{p}console/lambda.html">Lambda</a>
+      <a class="sl" href="{p}console/resources.html">All resources</a>
+      <a class="sl" href="{p}console/calls.html">Calls: what works where</a>
+      <a class="sl" href="{p}console/twin.html">Twin data</a>
+      <a class="sl" href="{p}console/plan.html">The plan, and the vault</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="{p}python/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
       <a class="sl" href="{p}sessions/index.html">AWS sessions</a>
       <a class="sl" href="{p}iam/index.html">Least privilege (IAM)</a>
       <a class="sl" href="{p}how-it-works/index.html">How it works: live, step by step</a>
@@ -103,11 +114,11 @@ def footer(p):
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="{p}admin/versions.html">{VER}</a> · <a href="{p}admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+    <p class="verline">site <a href="{p}admin/versions.html">{VER}</a> · <a href="{p}admin/index.html">engineering</a> · no analytics, no cookies; third-party code only where a page says so: Python (Pyodide, and wheels from PyPI) on the twin's pages, and the AWS SDK for JavaScript on the calls page when you measure it</p>
   </div>
   <div>
     <h4>The twin</h4>
-    <a href="{p}s3/index.html">S3 browser</a>
+    <a href="{p}console/index.html">The console</a>
     <a href="{p}sessions/index.html">AWS sessions</a>
     <a href="{p}iam/index.html">Least privilege (IAM)</a>
     <a href="{p}how-it-works/index.html">How it works</a>
@@ -187,9 +198,9 @@ page('index.html',
   f'''<header class="hero">
   <div class="eyebrow">The AWS twin · one instance of the twin primitive · proposed and prototyped {DATE}</div>
   <h1>AWS from the vault,<br>twin first</h1>
-  <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and <a href="s3/index.html#/live">the S3 browser, live</a>, directly or through a <a href="how-it-works/index.html#relay">local relay</a>. <a href="how-it-works/index.html">How it works</a>.</p>
+  <p class="sub">An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the <b>same interface</b> as a second backend, and what you built works against the live account. <b>This site holds the proof of concept</b>: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and <a href="console/index.html">the console</a>, live, directly or through a <a href="how-it-works/index.html#relay">local relay</a>. <a href="how-it-works/index.html">How it works</a>.</p>
   <div class="ctas">
-    <a class="cta1" href="s3/index.html">Open the S3 browser →</a>
+    <a class="cta1" href="console/index.html">Open the console →</a>
     <a class="cta2" href="sessions/index.html">AWS sessions →</a>
     <a class="cta2" href="design/index.html">The design →</a>
     <a class="cta2" href="workflow/index.html">The workflow →</a>
@@ -230,7 +241,7 @@ page('index.html',
       <tbody>
         <tr><td><b>The Python twin</b>: S3's REST-XML protocol and STS GetCallerIdentity answered from a VFS, a botocore hook, a local endpoint, record and replay</td><td><span class="st st-poc">PoC, working</span></td><td>The same 18 tests under pytest in CPython (18 pass) and under Pyodide in the browser (16 pass, 2 skipped: no sockets or disk). <a href="python/index.html">The Python twin →</a></td></tr>
         <tr><td><b>OSBot-AWS against the twin</b>, unchanged, in CPython and in the browser</td><td><span class="st st-poc">PoC, working</span></td><td>Its S3 helpers, from bucket_create to bucket_delete_all_files, and STS caller identity</td></tr>
-        <tr><td><b>The S3 browser</b>: every button a Python call, kept in IndexedDB through sg-vfs</td><td><span class="st st-poc">PoC, working</span></td><td>14 headless checks including a reload that restores the buckets. <a href="s3/index.html">Open it →</a></td></tr>
+        <tr><td><b>The S3 browser</b>: every button a Python call, kept in IndexedDB through sg-vfs</td><td><span class="st st-poc">PoC, working</span></td><td>14 headless checks including a reload that restores the buckets. <a href="console/s3.html">Open it →</a></td></tr>
         <tr><td><b>The session check</b>: a pasted session verified against AWS from the browser, through the twin's live route</td><td><span class="st st-poc">built</span></td><td>A signed STS call from Python in the browser reaches AWS and comes back. <a href="sessions/index.html">Sessions →</a></td></tr>
         <tr><td><b>The JavaScript interface</b>: 8 AWS-shaped namespaces, 42 operations, one manifest</td><td><span class="st st-poc">first PoC, superseded for new work</span></td><td>Still runs <a href="twin/index.html">the twin page</a>. New services go into the Python twin.</td></tr>
         <tr><td><b>The vault backend</b> on localStorage, and the memory backend</td><td><span class="st st-poc">PoC, working</span></td><td>Same script, two backends, same answers: 214 assertions in <code>admin/build/test.js</code></td></tr>
@@ -693,6 +704,7 @@ page('briefs/index.html',
       <tr><td><a href="2026-10-21__01__the-first-go.md">1. The first go</a></td><td>2026-10-21</td><td>The site and a proof of concept from the newsroom article and the naming decision; the naming document in full</td><td><span class="st st-built">built, v0.1.0</span></td></tr>
       <tr><td><a href="2026-10-21__02__articles-and-the-research-brief.md">2. Try it, and write it up</a></td><td>2026-10-21</td><td>An article in the agent's name, a research brief in Dinis's: the JavaScript SDK's maturity, boto3 in the browser</td><td><span class="st st-built">built, v0.2.0</span></td></tr>
       <tr><td><a href="2026-10-21__03__the-python-twin.md">3. The Python twin</a></td><td>2026-10-21</td><td>An S3 browser on Python, OSBot-AWS in the browser, the same tests in CI and the browser, the twin in Python, AWS sessions</td><td><span class="st st-built">built, v0.3.0</span> <span class="st st-design">Cognito measured, not built</span></td></tr>
+      <tr><td><a href="2026-10-23__08__the-console.md">8. The console</a></td><td>2026-10-23</td><td>A console, a page per service, the mode top left; a Lambda viewer first; a request pane that shows everything; a way to browse the twin's data; a plan for the vault; which calls work from the CLI, code, Pyodide and the JS SDK, and a Postman-like way to send and replay them</td><td><span class="st st-built">built, v0.4.2</span> <span class="st st-design">vault: planned</span></td></tr>
       <tr><td><a href="2026-10-23__07__uptime-lambda-in-every-region.md">7. An uptime Lambda in every region</a></td><td>2026-10-23</td><td>A plan, then the build: twins for Lambda and CloudFront, a function that checks websites from many regions and appends PKI-encrypted results to an sgit lane, tested from the page with boto3; Python or Node.js, no dependencies</td><td><span class="st st-built">phase 1 built, v0.4.1</span> <span class="st st-design">live deploy: phase 2</span></td></tr>
       <tr><td><a href="2026-10-21__06__versions-and-the-browser-only-question.md">6. Versions, and doing it from the browser</a></td><td>2026-10-21</td><td>dev releases minors, main releases majors; how a browser request differs from any other; listing buckets without the relay</td><td><span class="st st-built">versioning built, v0.4.1</span> <span class="st st-design">Cloud Control listing: proposed</span></td></tr>
       <tr><td><a href="2026-10-21__05__live-session-least-privilege-and-how-it-works.md">5. A live session, least privilege, how it works</a></td><td>2026-10-21</td><td>Browse real files with the pasted session in the S3 browser; guidance and commands for IAM Identity Center users that can only list buckets or read one; an article on the milestone; a step-by-step explanation of the relay, with diagrams</td><td><span class="st st-built">built, v0.4.0</span> <span class="st st-design">real-account S3 browse: next</span></td></tr>
@@ -714,6 +726,7 @@ page('admin/versions.html',
   <div class="tablewrap"><table class="vers">
     <thead><tr><th>Version</th><th>Date</th><th>What changed</th></tr></thead>
     <tbody>
+      <tr><td class="vnum">v0.4.2</td><td>2026-10-23</td><td>The console: <a href="../console/index.html">/console/</a>, a page per service (Overview, S3, Lambda, All resources, Calls, Twin data), twin or live switched top left, the region beside it, and a request pane on the right with every call and every request, its headers and bodies, a replay in the call editor, and, for a live read, what the twin would have answered. Lambda: functions per region, a scan of every region, configuration, environment, triggers, URL, code, a test invoke, logs, permissions. All resources and the S3 bucket list go through the Cloud Control API, which answers a browser. <a href="../console/calls.html">Calls</a>: 34 operations measured five ways (AWS CLI, boto3, boto3 under Pyodide, the AWS SDK for JavaScript, the twin); in a browser only three S3 calls are blocked, for both libraries alike; a call editor for any operation. A Cloud Control twin. The S3 twin refuses a bucket created at the wrong regional endpoint, as S3 does, which found the same bug in the S3 browser. botocore pinned with boto3. <a href="../console/plan.html">The plan, and the vault</a>.</td></tr>
       <tr><td class="vnum">v0.4.1</td><td>2026-10-23</td><td>Uptime checks in every region, twin first. A Node.js 22 Lambda function, one file with no dependencies, that checks websites and appends each report, encrypted as sgit's envelope v2 (RSA-OAEP SHA-256 wrapping AES-256-GCM, decrypted in CI by sgit's own construction), to an sgit append lane; scheduled by EventBridge, invokable with IAM, and through a function URL only with a controller-signed request. New twins: Lambda (running Node.js functions through one harness, with node in CI and the browser's JSPI in the page, and Python in process), IAM roles, EventBridge rules, CloudFront distributions, the sgit append lane and the internet a function reaches. <code>Uptime__Deploy</code>: one boto3 deploy for the twin and the account, to any number of regions. <a href="../uptime/index.html">The uptime page</a> and <a href="../uptime/plan.html">the plan</a>. Versions: a push to <code>dev</code> may only bump the minor, a push to <code>main</code> only the major; v0.4.0, released from <code>dev</code>, was the last exception. Browser tests run on a secure origin.</td></tr>
       <tr><td class="vnum">v0.4.0</td><td>{DATE}</td><td>Live, from the browser. The S3 browser goes live with the session pasted in the same tab: directly where AWS allows this site's origin (a bucket with a CORS rule), and through <code>Twin__Relay.py</code>, a one-file local relay that holds no credentials, for what S3 never answers a browser, such as ListBuckets. Read-only unless writes are allowed. <a href="../how-it-works/index.html">How it works</a>, step by step, with diagrams written in Mermaid and rendered to SVG at build time. <a href="../iam/index.html">Least privilege for the twin</a>: four S3 permission sets as policy files, the IAM Identity Center CLI, checked through the AWS CLI in CI (<code>check_cli.py</code>). The article <a href="../articles/a-live-aws-session-from-a-browser-tab.html">A live AWS session from a browser tab</a>, after the first real session was checked against AWS STS from this site. Three live-path bugs fixed before any real use: chunked uploads hung, uploads went empty, downloads failed.</td></tr>
       <tr><td class="vnum">v0.3.1</td><td>{DATE}</td><td>Deployed, and tagged on every release. aws.twin.sgit.ai resolved to GitHub Pages and answered 404, because this repository had no deploy workflow; <code>deploy-pages.yml</code> is now the twins hub's own (validate, tag <code>vX.Y.Z</code> on every push to <code>dev</code>, publish), with this site's tests added to its gate. The version lives in <code>admin/build/version.txt</code>; <code>CNAME</code>, <code>assets/version.js</code>, a markdown twin for every page, <code>sitemap.xml</code> and <code>robots.txt</code> added; the four briefs published in full; <code>BRIEF-CORRECTIONS.md</code> and <code>REALITY.md</code> written; a release script that checks the live site. Also ships <code>308b2ae</code>, which committed the build scripts a <code>.gitignore</code> rule had hidden. Releases v0.1.0 to v0.3.0 were tagged by hand.</td></tr>
@@ -731,12 +744,73 @@ page('python/tests.html',
   'The Python twin\'s test suite, the same files CI runs with pytest, run in the browser under Pyodide with boto3, OSBot-Utils and OSBot-AWS.',
   body_of('python-tests.html'))
 
-# ---------------------------------------------------------------- s3/index.html
+# ---------------------------------------------------------------- s3/index.html: moved into the console
 page('s3/index.html',
-  'S3 browser · aws.twin.sgit.ai',
-  'An S3 browser whose every button is Python: OSBot-AWS and boto3 in the browser through Pyodide, answered by the Python twin in the same page, kept in IndexedDB through sg-vfs.',
-  body_of('s3.html'),
-  extra_head='<link rel="stylesheet" href="../assets/twin/app.css">\n<link rel="stylesheet" href="../assets/s3/s3.css">\n')
+  'S3 browser, now in the console · aws.twin.sgit.ai',
+  'The S3 browser is now the console\'s S3 page.',
+  '''<main class="doc">
+  <div class="crumb"><a href="../index.html">aws.twin.sgit.ai</a> / s3</div>
+  <h1>The S3 browser is now part of the console</h1>
+  <p class="lead">Same buckets, same objects, the same twin store in this browser: <a href="../console/s3.html">the console's S3 page</a>, beside Lambda, every other resource type, and a pane that shows every request.</p>
+</main>
+<script>location.replace('../console/s3.html' + location.hash);</script>''')
+
+# ---------------------------------------------------------------- console/
+CONSOLE_TABS = [('index', 'Overview'), ('s3', 'S3'), ('lambda', 'Lambda'), ('resources', 'All resources'), ('calls', 'Calls'), ('twin', 'Twin data')]
+
+def console_page(name, title, desc, intro):
+    tabs = ''.join(f'<a href="{n}.html"{" class=" + chr(34) + "here" + chr(34) if n == name else ""}>{label}</a>' for n, label in CONSOLE_TABS)
+    module = 'overview' if name == 'index' else name
+    body = f'''<main class="cx">
+  <p class="cx-intro">{intro} <a href="plan.html">The plan →</a></p>
+  <div class="s3 cx-shell">
+    <div class="s3-top cx-top">
+      <div class="cx-mode" id="cx-mode" title="Where calls go: the twin in this page, or the account with the session from the sessions page"><button type="button" data-mode="twin" class="on">Twin</button><button type="button" data-mode="live">Live</button></div>
+      <nav class="cx-tabs" aria-label="Console">{tabs}</nav>
+      <span class="grow"></span>
+      <span class="pill" id="cx-who">loading…</span>
+      <label>Region <select id="cx-region"><option>eu-west-2</option></select></label>
+      <span class="pill" id="cx-state">loading Python…</span>
+      <button class="cx-pane-btn" type="button" data-cx="pane" title="Every call and every request, twin or live">Requests<span id="cx-count">0</span></button>
+    </div>
+    <div id="cx-live-form" hidden></div>
+    <div class="cx-body">
+      <div class="s3-main" id="cx-app"><div class="s3-loading">Starting Python, boto3 and the twin in this page (about 25 MB the first time, then from the browser's cache)…<br><pre class="steps" id="cx-steps"></pre></div></div>
+      <aside class="cx-pane" id="cx-pane" hidden aria-label="Requests">
+        <div class="cx-pane-h"><b>Requests</b><button type="button" data-cx="pane-clear">Clear</button><button type="button" data-cx="pane-export">Export JSON</button><button type="button" data-cx="pane">Close</button><input id="cx-pane-filter" placeholder="filter: service.op, twin or live, an error code" autocomplete="off"></div>
+        <div class="cx-pane-note">One line per Python call, newest first; open it for the requests it sent (to the twin, or to AWS) and open a request for its headers and bodies, a replay, and, for a live read, what the twin would have answered.</div>
+        <div id="cx-pane-list"></div>
+      </aside>
+    </div>
+  </div>
+  <noscript><div class="s3-flash err">The console is Python running in this page through Pyodide; it needs JavaScript.</div></noscript>
+</main>
+<script src="../assets/py/twin-pyodide.js"></script>
+<script type="module" src="../assets/console/page-{module}.js"></script>'''
+    page(f'console/{name}.html', title, desc, body, extra_head='<link rel="stylesheet" href="../assets/console/console.css">\n')
+
+console_page('index', 'Console · aws.twin.sgit.ai',
+  'The AWS twin\'s console: S3, Lambda and every other resource type, against the twin in this page or a live account, with every request visible.',
+  'The console: one page per service, every button a Python call (boto3 and OSBot-AWS) answered by the twin in this page, or by an account in live mode.')
+console_page('s3', 'S3 · console · aws.twin.sgit.ai',
+  'Buckets and objects in the twin or a live account; live, buckets are listed through the Cloud Control API because S3\'s ListBuckets never answers a browser.',
+  'S3: buckets, objects, upload, properties. Live, buckets are listed through Cloud Control, every region\'s; a bucket\'s objects need a CORS rule on it.')
+console_page('lambda', 'Lambda · console · aws.twin.sgit.ai',
+  'Lambda functions per region and across every region, with each function\'s configuration, code, permissions, triggers, logs and a test invoke, in the twin or a live account.',
+  'Lambda: functions per region, a scan of every region, each function\'s configuration, code, test, logs and permissions. In the twin the functions really run.')
+console_page('resources', 'All resources · console · aws.twin.sgit.ai',
+  'Any AWS resource type, listed and read through the Cloud Control API from the browser, against the twin or a live account.',
+  'All resources: any type, through the Cloud Control API, which answers a browser from any origin.')
+console_page('calls', 'Calls: what works where · console · aws.twin.sgit.ai',
+  'Which AWS calls work from the AWS CLI, boto3, boto3 in the browser under Pyodide, the AWS SDK for JavaScript in the browser, and the twin, measured; and a call editor to send any operation by hand.',
+  'Calls: the same AWS calls made five ways, measured, and an editor to send any operation of any service, or replay one from the request pane.')
+console_page('twin', 'Twin data · console · aws.twin.sgit.ai',
+  'What the AWS twin holds in this browser, file by file: buckets, functions, roles, rules, distributions, lanes.',
+  'Twin data: the twin\'s store in this browser, as files.')
+page('console/plan.html',
+  'The console plan, and the vault · aws.twin.sgit.ai',
+  'What the console is for, how it is built, what works where, what is next, and the plan for keeping the twin\'s state in an sgit vault.',
+  body_of('console-plan.html'))
 
 # ---------------------------------------------------------------- python/index.html
 page('python/index.html',

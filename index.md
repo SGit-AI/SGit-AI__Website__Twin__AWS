@@ -1,12 +1,12 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 The AWS twin · one instance of the twin primitive · proposed and prototyped 2026-10-21
 
 # AWS from the vault, twin first
 
-An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the **same interface** as a second backend, and what you built works against the live account. **This site holds the proof of concept**: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and [the S3 browser, live](s3/index.md#/live), directly or through a [local relay](how-it-works/index.md#relay). [How it works](how-it-works/index.md).
+An AWS-shaped interface, S3, Lambda, EC2, IAM, billing and logs, whose backend is a vault. Build everything against the twin, with no credentials. Then put a temporary session from the AWS access portal in front of the **same interface** as a second backend, and what you built works against the live account. **This site holds the proof of concept**: the interface, a vault backend on this browser's localStorage, snapshots as commits, an account graph, and a deployment rehearsal. Since v0.4.0 the Python twin's live route reaches a real account from the browser: a pasted session checked against AWS STS, and [the console](console/index.md), live, directly or through a [local relay](how-it-works/index.md#relay). [How it works](how-it-works/index.md).
 
- [Open the S3 browser →](s3/index.md) [AWS sessions →](sessions/index.md) [The design →](design/index.md) [The workflow →](workflow/index.md)
+ [Open the console →](console/index.md) [AWS sessions →](sessions/index.md) [The design →](design/index.md) [The workflow →](workflow/index.md)
 
 ## In short
 
@@ -66,7 +66,7 @@ A site about a twin owes the reader its build state before anything else. Here i
 |---|---|---|
 | **The Python twin**: S3's REST-XML protocol and STS GetCallerIdentity answered from a VFS, a botocore hook, a local endpoint, record and replay | PoC, working | The same 18 tests under pytest in CPython (18 pass) and under Pyodide in the browser (16 pass, 2 skipped: no sockets or disk). [The Python twin →](python/index.md) |
 | **OSBot-AWS against the twin**, unchanged, in CPython and in the browser | PoC, working | Its S3 helpers, from bucket_create to bucket_delete_all_files, and STS caller identity |
-| **The S3 browser**: every button a Python call, kept in IndexedDB through sg-vfs | PoC, working | 14 headless checks including a reload that restores the buckets. [Open it →](s3/index.md) |
+| **The S3 browser**: every button a Python call, kept in IndexedDB through sg-vfs | PoC, working | 14 headless checks including a reload that restores the buckets. [Open it →](console/s3.md) |
 | **The session check**: a pasted session verified against AWS from the browser, through the twin's live route | built | A signed STS call from Python in the browser reaches AWS and comes back. [Sessions →](sessions/index.md) |
 | **The JavaScript interface**: 8 AWS-shaped namespaces, 42 operations, one manifest | first PoC, superseded for new work | Still runs [the twin page](twin/index.md). New services go into the Python twin. |
 | **The vault backend** on localStorage, and the memory backend | PoC, working | Same script, two backends, same answers: 214 assertions in `admin/build/test.js` |

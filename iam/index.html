@@ -21,13 +21,24 @@
   <a class="brand" href="../index.html">aws.twin<span>.sgit.ai</span></a>
   <a class="parent" href="https://twins.sgit.ai" title="twins.sgit.ai — the hub: the twin primitive, and the catalogue of twins in place">↗ part of <b>twins.sgit.ai</b></a>
   <span class="stage-pill">proof of concept</span>
-  <a class="ver" href="../admin/versions.html" title="Site release history">v0.4.1</a>
+  <a class="ver" href="../admin/versions.html" title="Site release history">v0.4.2</a>
   <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Menu">Menu</button>
   <div class="nav-items">
     <div class="ni ni-has">
-      <a class="nl" href="../s3/index.html">The twin<span class="caret">&#9662;</span></a>
+      <a class="nl" href="../console/index.html">Console<span class="caret">&#9662;</span></a>
       <div class="sub">
-      <a class="sl" href="../s3/index.html">S3 browser (Python)</a>
+      <a class="sl" href="../console/index.html">Overview</a>
+      <a class="sl" href="../console/s3.html">S3</a>
+      <a class="sl" href="../console/lambda.html">Lambda</a>
+      <a class="sl" href="../console/resources.html">All resources</a>
+      <a class="sl" href="../console/calls.html">Calls: what works where</a>
+      <a class="sl" href="../console/twin.html">Twin data</a>
+      <a class="sl" href="../console/plan.html">The plan, and the vault</a>
+      </div>
+    </div>
+    <div class="ni ni-has">
+      <a class="nl" href="../python/index.html">The twin<span class="caret">&#9662;</span></a>
+      <div class="sub">
       <a class="sl" href="../sessions/index.html">AWS sessions</a>
       <a class="sl" href="../iam/index.html">Least privilege (IAM)</a>
       <a class="sl" href="../how-it-works/index.html">How it works: live, step by step</a>
@@ -123,12 +134,13 @@
   "Statement": [
     { "Sid": "SeeTheBucketNamesAndNothingElse",
       "Effect": "Allow",
-      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation"],
+      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation", "cloudformation:ListResources"],
       "Resource": "*" }
   ]
 }</pre>
   <p>Notes that matter in practice:</p>
   <ul>
+    <li><b>Why <code>cloudformation:ListResources</code>.</b> A browser cannot call S3's ListBuckets (it sends no CORS headers), so the console lists buckets through the Cloud Control API, which answers a page. Cloud Control checks both permissions: its own, and the S3 one (<code>s3:ListAllMyBuckets</code>) for what it lists. On its own it reveals nothing: listing any other resource type still needs that type's own permissions.</li>
     <li><b>Bucket-level and object-level actions take different ARNs.</b> <code>s3:ListBucket</code> is granted on <code>arn:aws:s3:::BUCKET_NAME</code>; <code>s3:GetObject</code> on <code>arn:aws:s3:::BUCKET_NAME/*</code>. Mixing them up is the most common reason a "read" policy reads nothing.</li>
     <li><b>Hiding the other buckets' names</b>: drop the <code>SeeTheBucketNames</code> statement from the read recipes. The S3 browser then cannot list buckets, and you open yours by name instead (its <b>Open a bucket by name</b> form).</li>
     <li><b>The folder recipe</b> follows AWS's own home-folder pattern: listing is allowed for the prefixes <code>""</code>, <code>FOLDER/</code> and <code>FOLDER/*</code>, so the bucket's top-level names are visible and nothing below another folder is. The S3 browser sends <code>prefix=</code> at a bucket's root, as the S3 console does, so the condition matches.</li>
@@ -233,7 +245,7 @@ aws iam simulate-custom-policy --policy-input-list file://s3-read-one-folder.jso
   <ol>
     <li>Sign in to the access portal as the narrow user (or as yourself), pick the account, and pick <b>S3-List-Bucket-Names</b>, not AdministratorAccess. Choose <b>Access keys</b> and copy any block.</li>
     <li>Paste it on <a href="../sessions/index.html">the sessions page</a> and press <b>Check it against AWS</b>. The ARN should name <code>AWSReservedSSO_S3-List-Bucket-Names_…</code>.</li>
-    <li>In the same tab, open <a href="../s3/index.html#/live">the S3 browser's Live session view</a>. To list buckets, start the relay (<a href="../how-it-works/index.html#relay">what it is</a>) and tick <b>Use the local relay</b>; allow the browser's local-network prompt. Press <b>Go live</b>.</li>
+    <li>In the same tab, open <a href="../console/s3.html">the console's S3 page</a> and press <b>Live</b>, top left, then <b>Go live</b>. Buckets are listed through Cloud Control, from the browser; opening one needs its CORS rule (section 7), or the local relay (<a href="../how-it-works/index.html#relay">what it is</a>).</li>
     <li>What each recipe should show:</li>
   </ol>
   <div class="tablewrap"><table>
@@ -285,11 +297,11 @@ aws sso-admin delete-account-assignment --instance-arn $INSTANCE_ARN --target-id
     <p>The AWS twin: an AWS-shaped interface (S3, Lambda, EC2, IAM, billing, logs) whose backend is a vault, with a live session as one backend among several. One instance in the twins family; the primitive is defined on <a href="https://twins.sgit.ai" style="display:inline;padding:0"><b>twins.sgit.ai</b></a>. All content CC BY 4.0; the code is Apache-2.0.</p>
     <p class="netline"><a href="https://twins.sgit.ai"><b>↗ twins.sgit.ai</b></a> — the hub · <a href="https://sgit.ai">↗ sgit.ai</a> — the parent project · <a href="https://sg-compute.sgit.ai">↗ sg-compute.sgit.ai</a> — ships the S3 twin · <a href="https://newsroom.sgit.ai/articles/aws-from-the-vault.html">↗ the article</a> · <a href="https://sgit.ai/network/index.html">↗ the network</a></p>
     <p class="partnote">⚠ Participant disclosure: published by the sgit project, which builds the vault this twin stores into and the server components its first job deploys. Not affiliated with, endorsed by, or sponsored by Amazon Web Services; AWS service names identify the interfaces this twin mirrors.</p>
-    <p class="verline">site <a href="../admin/versions.html">v0.4.1</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies, no third-party scripts on the site's pages (the one experiment page under articles/data says what it loads)</p>
+    <p class="verline">site <a href="../admin/versions.html">v0.4.2</a> · <a href="../admin/index.html">engineering</a> · no analytics, no cookies; third-party code only where a page says so: Python (Pyodide, and wheels from PyPI) on the twin's pages, and the AWS SDK for JavaScript on the calls page when you measure it</p>
   </div>
   <div>
     <h4>The twin</h4>
-    <a href="../s3/index.html">S3 browser</a>
+    <a href="../console/index.html">The console</a>
     <a href="../sessions/index.html">AWS sessions</a>
     <a href="../iam/index.html">Least privilege (IAM)</a>
     <a href="../how-it-works/index.html">How it works</a>

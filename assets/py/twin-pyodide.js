@@ -13,7 +13,7 @@
 (function (root) {
   'use strict';
   var PYODIDE_VERSION = '0.28.3';
-  var PACKAGES = ['boto3==1.43.116', 'osbot-utils==3.75.0', 'osbot-aws==2.39.10'];
+  var PACKAGES = ['boto3==1.43.116', 'botocore==1.43.116', 'osbot-utils==3.75.0', 'osbot-aws==2.39.10'];
 
   function loadScript(src) {
     return new Promise(function (resolve, reject) {

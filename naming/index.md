@@ -1,4 +1,4 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/naming/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/naming/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / naming
 

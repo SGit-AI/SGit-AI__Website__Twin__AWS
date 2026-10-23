@@ -25,6 +25,9 @@ SESSION_ENV = ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN'
 
 
 class S3__Browser:
+    WRITES      = WRITES                                       # what live mode refuses until writes are allowed
+    LIVE_ROUTES = ('s3', 'sts')                                # the services live mode sends to the account
+
     def __init__(self):
         self.twin         = None
         self.s3           = None
@@ -67,7 +70,7 @@ class S3__Browser:
                            'AWS_SESSION_TOKEN': s['sessionToken'], 'AWS_DEFAULT_REGION': s.get('region') or self.region})
         self.live, self.allow_writes, self.relay = True, bool(allow_writes), (relay_url or None)
         self._swap(Twin(vfs=self.vfs, region=s.get('region') or self.region, set_credentials=False,
-                        routes={'s3': 'live', 'sts': 'live'}, live_relay=self.relay))
+                        routes={svc: 'live' for svc in self.LIVE_ROUTES}, live_relay=self.relay))
         who = self.client_sts().get_caller_identity()
         return {'mode': 'live', 'account': who['Account'], 'arn': who['Arn'], 'relay': self.relay, 'allow_writes': self.allow_writes}
 
@@ -82,7 +85,7 @@ class S3__Browser:
         before  = len(self.twin.traffic.records)
         started = time.time()
         try:
-            if self.live and name in WRITES and not self.allow_writes:
+            if self.live and name in self.WRITES and not self.allow_writes:
                 e = PermissionError(f'{name} would change the real account, and live mode is read-only: allow writes first')
                 e.code = 'ReadOnly'
                 raise e
@@ -94,7 +97,7 @@ class S3__Browser:
             if isinstance(e, Twin__Browser_Blocked):
                 code = 'BrowserBlocked'
             error = {'type': type(e).__name__, 'code': code, 'message': str(e)}
-        traffic = [{k: r[k] for k in ('seq', 'service', 'operation', 'method', 'url', 'status', 'ms')} for r in self.twin.traffic.records[before:]]
+        traffic = [{k: r[k] for k in ('seq', 'service', 'operation', 'method', 'url', 'status', 'ms', 'target')} for r in self.twin.traffic.records[before:]]
         entry   = {'name': name, 'python': python, 'ms': round((time.time() - started) * 1000, 1), 'traffic': traffic, 'error': error,
                    'mode': 'live' if self.live else 'twin'}
         self.calls.append(entry)
@@ -112,6 +115,10 @@ class S3__Browser:
                 "S3().client().list_buckets()")
 
     def op_create_bucket(self, name, region):
+        if region == 'us-east-1':                                  # OSBot-AWS omits the location constraint for us-east-1, which only
+            import boto3                                           # the us-east-1 endpoint accepts: send it there, as S3 requires
+            boto3.client('s3', region_name='us-east-1').create_bucket(Bucket=name)
+            return {'status': 'ok', 'data': f'/{name}'}, f"boto3.client('s3', region_name='us-east-1').create_bucket(Bucket={name!r})"
         r = self.s3.bucket_create(name, region)
         if r.get('status') != 'ok':
             e = Exception(r.get('data'))

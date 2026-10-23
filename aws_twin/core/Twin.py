@@ -14,7 +14,7 @@ A live route goes straight to AWS, or through the local relay (Twin__Relay.py) w
 the relay holds no credentials and adds the CORS headers a browser needs for services, such as S3's
 ListBuckets, that do not answer a page.
 Services: S3, STS GetCallerIdentity, IAM roles, Lambda (running the deployed code), EventBridge
-rules, CloudFront distributions; outside AWS, the internet a function reaches and sgit's append
+rules, CloudFront distributions, Cloud Control's list and get over all of them; outside AWS, the internet a function reaches and sgit's append
 lanes. Services the twin does not have answer 501 NotImplemented with the operation named, so
 a gap is visible in the traffic, never a silent success."""
 import json
@@ -26,6 +26,7 @@ import time
 from aws_twin.core.Twin__Http             import Twin__Request, Twin__Response
 from aws_twin.core.Twin__Traffic          import Twin__Traffic
 from aws_twin.awslambda.Lambda__Twin      import Lambda__Twin
+from aws_twin.cloudcontrol.CloudControl__Twin import CloudControl__Twin
 from aws_twin.cloudfront.CloudFront__Twin import CloudFront__Twin
 from aws_twin.events.Events__Twin         import Events__Twin
 from aws_twin.iam.IAM__Twin               import IAM__Twin
@@ -53,7 +54,7 @@ class Twin:
         self.replay            = replay
         self.traffic           = Twin__Traffic(keep_bodies=keep_bodies)
         self.services          = {'s3': S3__Twin(self), 'sts': STS__Twin(self), 'iam': IAM__Twin(self), 'lambda': Lambda__Twin(self),
-                                  'events': Events__Twin(self), 'cloudfront': CloudFront__Twin(self)}
+                                  'events': Events__Twin(self), 'cloudfront': CloudFront__Twin(self), 'cloudcontrolapi': CloudControl__Twin(self)}
         self.internet          = Twin__Internet(self.vfs)                # what a twinned function's outbound requests get
         self.append_lanes      = Append_Lane__Twin(self.vfs)            # sgit's append lanes, which functions post reports to
         self.set_credentials   = set_credentials
@@ -120,16 +121,26 @@ class Twin:
         if request.header('x-amz-target') or 'json' in request.header('content-type', ''):
             return Twin__Response(501, {'content-type': 'application/x-amz-json-1.1', 'x-amzn-errortype': 'NotImplemented'},
                                   json.dumps({'__type': 'NotImplemented', 'message': message}))
-        return Twin__Response(501, {'content-type': 'application/xml'},
+        return Twin__Response(501, {'content-type': 'application/xml', 'x-amzn-errortype': 'NotImplemented'},   # the header: for REST-JSON parsers
                               f'<ErrorResponse><Error><Code>NotImplemented</Code><Message>{message}</Message></Error></ErrorResponse>')
 
     # ── the botocore hook ────────────────────────────────────────────────
     def activate(self):
         from botocore.httpsession import URLLib3Session
+        from botocore.client      import BaseClient
         if self._saved_send is not None:
             return self
         twin = self
-        original = URLLib3Session.send
+        original     = URLLib3Session.send
+        original_api = BaseClient._make_api_call
+
+        def make_api_call(client_self, operation_name, api_params):    # the call as the caller wrote it, kept with the request
+            twin.traffic.pending_api = {'service': client_self.meta.service_model.service_name, 'operation': operation_name,
+                                        'region': client_self.meta.region_name, 'params': api_params_json(api_params)}
+            try:
+                return original_api(client_self, operation_name, api_params)
+            finally:
+                twin.traffic.pending_api = None
 
         def send(session_self, prepared):
             if hasattr(prepared.body, 'read'):                        # a stream can be read once: read it here, and give
@@ -153,7 +164,9 @@ class Twin:
             return to_botocore(prepared.url, twin.handle(request))
 
         URLLib3Session.send = send
+        BaseClient._make_api_call = make_api_call
         self._saved_send    = original
+        self._saved_api     = original_api
         if self.set_credentials:
             for k, v in TWIN_CREDENTIALS.items():
                 self._saved_env[k] = os.environ.get(k)
@@ -164,8 +177,10 @@ class Twin:
 
     def deactivate(self):
         from botocore.httpsession import URLLib3Session
+        from botocore.client      import BaseClient
         if self._saved_send is not None:
             URLLib3Session.send = self._saved_send
+            BaseClient._make_api_call = self._saved_api
             self._saved_send    = None
         for k, v in self._saved_env.items():
             if v is None: os.environ.pop(k, None)
@@ -205,6 +220,26 @@ class _Raw:
 
     def close(self):
         pass
+
+
+def api_params_json(params):
+    """An operation's parameters as JSON-able values: bytes and streams as a note of their size, dates as ISO text."""
+    def clean(v):
+        if isinstance(v, dict):
+            return {k: clean(x) for k, x in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [clean(x) for x in v]
+        if isinstance(v, (bytes, bytearray)):
+            try:
+                return v.decode('utf-8') if len(v) <= 4096 else f'<{len(v)} bytes>'
+            except UnicodeDecodeError:
+                return f'<{len(v)} bytes>'
+        if hasattr(v, 'read'):
+            return '<a stream>'
+        if hasattr(v, 'isoformat'):
+            return v.isoformat()
+        return v if isinstance(v, (str, int, float, bool)) or v is None else str(v)
+    return clean(params)
 
 
 def to_botocore(url, response):

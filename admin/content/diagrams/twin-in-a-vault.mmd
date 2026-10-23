@@ -1,0 +1,16 @@
+sequenceDiagram
+  autonumber
+  participant P as A console page
+  participant T as The twin (sg-vfs)
+  participant V as Vault provider (next)
+  participant S as SG/Send server
+  P->>T: boto3 calls, as today
+  T->>V: write_file(path, bytes), as it writes IndexedDB today
+  V->>V: encrypt with the vault key (AES-256-GCM, in the page)
+  Note over V: a commit per action, or per session:<br/>the history of the twin is the vault's history
+  V->>S: push ciphertext under opaque ids
+  S-->>V: ok
+  P->>V: open the vault on another device, with its key
+  V->>S: pull
+  S-->>V: ciphertext
+  V->>T: the same files: the same twin

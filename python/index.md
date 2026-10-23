@@ -1,10 +1,10 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/python/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/python/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / python
 
 # The Python twin
 
-The twin is now Python. It answers the HTTP requests boto3, OSBot-AWS or the AWS CLI send, signed as they would be for AWS, from a virtual file system instead of an account. The same package runs in CI under pytest, on a laptop as a local endpoint, and in this browser under Pyodide, where it is what the [S3 browser](../s3/index.md) talks to.
+The twin is now Python. It answers the HTTP requests boto3, OSBot-AWS or the AWS CLI send, signed as they would be for AWS, from a virtual file system instead of an account. The same package runs in CI under pytest, on a laptop as a local endpoint, and in this browser under Pyodide, where it is what [the console](../console/index.md) talks to.
 
 ## 1. Why Python, and why the wire
 

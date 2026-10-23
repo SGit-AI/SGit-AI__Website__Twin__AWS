@@ -1,0 +1,13 @@
+flowchart LR
+  subgraph pages["/console/: one page per service"]
+    ov["Overview"] --- s3p["S3"] --- lp["Lambda"] --- rp["All resources"] --- cp["Calls"] --- tp["Twin data"]
+  end
+  core["core.js<br/>mode · region · routing<br/>the request pane"]
+  pages --> core
+  core -->|"callPromising"| py["Console.py<br/>boto3 · OSBot-AWS"]
+  py --> hook{"the twin's hook<br/>per service"}
+  hook -->|"twin"| twin["The twin<br/>S3 · Lambda · IAM · EventBridge<br/>CloudFront · Cloud Control"]
+  hook -->|"live"| aws[("Your AWS account<br/>signed in the page,<br/>sent by the browser")]
+  twin --> idb[("IndexedDB<br/>sg-vfs, shared<br/>by every page")]
+  hook -.->|"every request,<br/>both ways"| pane["The request pane"]
+  idb -.->|"next: the same files"| vault[("An sgit vault<br/>encrypted, versioned")]

@@ -1,4 +1,4 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/iam/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/iam/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / iam
 
@@ -51,7 +51,7 @@ The list-only recipe is the one you asked for, written out:
   "Statement": [
     { "Sid": "SeeTheBucketNamesAndNothingElse",
       "Effect": "Allow",
-      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation"],
+      "Action": ["s3:ListAllMyBuckets", "s3:GetBucketLocation", "cloudformation:ListResources"],
       "Resource": "*" }
   ]
 }
@@ -59,6 +59,7 @@ The list-only recipe is the one you asked for, written out:
 
 Notes that matter in practice:
 
+- **Why `cloudformation:ListResources`.** A browser cannot call S3's ListBuckets (it sends no CORS headers), so the console lists buckets through the Cloud Control API, which answers a page. Cloud Control checks both permissions: its own, and the S3 one (`s3:ListAllMyBuckets`) for what it lists. On its own it reveals nothing: listing any other resource type still needs that type's own permissions.
 - **Bucket-level and object-level actions take different ARNs.** `s3:ListBucket` is granted on `arn:aws:s3:::BUCKET_NAME`; `s3:GetObject` on `arn:aws:s3:::BUCKET_NAME/*`. Mixing them up is the most common reason a "read" policy reads nothing.
 - **Hiding the other buckets' names**: drop the `SeeTheBucketNames` statement from the read recipes. The S3 browser then cannot list buckets, and you open yours by name instead (its **Open a bucket by name** form).
 - **The folder recipe** follows AWS's own home-folder pattern: listing is allowed for the prefixes `""`, `FOLDER/` and `FOLDER/*`, so the bucket's top-level names are visible and nothing below another folder is. The S3 browser sends `prefix=` at a bucket's root, as the S3 console does, so the condition matches.
@@ -179,7 +180,7 @@ The simulator pairs every action with every resource. For the read-one-bucket re
 
 1. Sign in to the access portal as the narrow user (or as yourself), pick the account, and pick **S3-List-Bucket-Names**, not AdministratorAccess. Choose **Access keys** and copy any block.
 2. Paste it on [the sessions page](../sessions/index.md) and press **Check it against AWS**. The ARN should name `AWSReservedSSO_S3-List-Bucket-Names_…`.
-3. In the same tab, open [the S3 browser's Live session view](../s3/index.md#/live). To list buckets, start the relay ([what it is](../how-it-works/index.md#relay)) and tick **Use the local relay**; allow the browser's local-network prompt. Press **Go live**.
+3. In the same tab, open [the console's S3 page](../console/s3.md) and press **Live**, top left, then **Go live**. Buckets are listed through Cloud Control, from the browser; opening one needs its CORS rule (section 7), or the local relay ([what it is](../how-it-works/index.md#relay)).
 4. What each recipe should show:
 
 | Permission set | Bucket list | Open a bucket | Open a file | Upload (writes ticked) |

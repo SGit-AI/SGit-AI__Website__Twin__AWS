@@ -1,4 +1,4 @@
-<!-- the markdown twin of https://aws.twin.sgit.ai/how-it-works/index.html, generated from the same source by admin/build/pages.py; site v0.4.1; content CC BY 4.0 -->
+<!-- the markdown twin of https://aws.twin.sgit.ai/how-it-works/index.html, generated from the same source by admin/build/pages.py; site v0.4.2; content CC BY 4.0 -->
 
 [aws.twin.sgit.ai](../index.md) / how it works
 
@@ -260,7 +260,7 @@ Each would have broken the first real use, and none shows up against the twin ro
 
 The diagrams are Mermaid, rendered to SVG when the site is built (`admin/build/diagrams.js`), so this page loads no diagram script; each one's source is under it.
 
-[← Least privilege for the twin](../iam/index.md)[The S3 browser →](../s3/index.md)
+[← Least privilege for the twin](../iam/index.md)[The console →](../console/index.md)
 
 ---
 

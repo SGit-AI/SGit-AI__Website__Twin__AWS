@@ -1,0 +1,938 @@
+{
+ "measured": {
+  "code": "2026-10-23",
+  "cli": "2026-10-23",
+  "browser": "2026-10-23"
+ },
+ "versions": {
+  "boto3": "1.43.116",
+  "aws_cli": "aws-cli/1.46.1 Python/3.13.16 Linux/6.18.44-fc-v153 botocore/1.43.62",
+  "pyodide": "0.28.3",
+  "js_sdk": "3.1147.0",
+  "browser": "HeadlessChrome/141.0.7390.37"
+ },
+ "rows": [
+  {
+   "id": "sts.GetCallerIdentity",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 705
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1275
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 406,
+    "id": "sts.GetCallerIdentity"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1862
+   }
+  },
+  {
+   "id": "s3.ListBuckets",
+   "code": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 582
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 1319
+   },
+   "pyodide": {
+    "status": "blocked",
+    "ms": 409,
+    "id": "s3.ListBuckets"
+   },
+   "jssdk": {
+    "status": "blocked",
+    "code": "TypeError: Failed to fetch",
+    "ms": 1595
+   }
+  },
+  {
+   "id": "s3.ListObjectsV2",
+   "code": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 729
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "NoSuchBucket"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 1332
+   },
+   "pyodide": {
+    "status": "blocked",
+    "ms": 517,
+    "id": "s3.ListObjectsV2"
+   },
+   "jssdk": {
+    "status": "blocked",
+    "code": "TypeError: Failed to fetch",
+    "ms": 526
+   }
+  },
+  {
+   "id": "s3.GetBucketLocation",
+   "code": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 481
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "NoSuchBucket"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidAccessKeyId",
+    "ms": 1335
+   },
+   "pyodide": {
+    "status": "blocked",
+    "ms": 177,
+    "id": "s3.GetBucketLocation"
+   },
+   "jssdk": {
+    "status": "blocked",
+    "code": "TypeError: Failed to fetch",
+    "ms": 209
+   }
+  },
+  {
+   "id": "cloudcontrol.ListResources",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 607
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1069
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 512,
+    "id": "cloudcontrol.ListResources"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 911
+   }
+  },
+  {
+   "id": "cloudcontrol.GetResource",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 675
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "ResourceNotFoundException"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1079
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 228,
+    "id": "cloudcontrol.GetResource"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 202
+   }
+  },
+  {
+   "id": "lambda.ListFunctions",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 514
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1148
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 573,
+    "id": "lambda.ListFunctions"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 860
+   }
+  },
+  {
+   "id": "lambda.GetFunction",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 568
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "ResourceNotFoundException"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1357
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 224,
+    "id": "lambda.GetFunction"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 177
+   }
+  },
+  {
+   "id": "lambda.Invoke",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 643
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "ResourceNotFoundException"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1257
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 190,
+    "id": "lambda.Invoke"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 222
+   }
+  },
+  {
+   "id": "lambda.GetFunctionUrlConfig",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 659
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "ResourceNotFoundException"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1290
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 186,
+    "id": "lambda.GetFunctionUrlConfig"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 208
+   }
+  },
+  {
+   "id": "iam.ListRoles",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 460
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1106
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 202,
+    "id": "iam.ListRoles"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 2620
+   }
+  },
+  {
+   "id": "iam.GetRole",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 379
+   },
+   "twin": {
+    "status": "twinned",
+    "code": "NoSuchEntity"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1133
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 107,
+    "id": "iam.GetRole"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 99
+   }
+  },
+  {
+   "id": "events.ListRules",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 755
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1434
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 495,
+    "id": "events.ListRules"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 4590
+   }
+  },
+  {
+   "id": "logs.DescribeLogGroups",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 561
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1483
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 412,
+    "id": "logs.DescribeLogGroups"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1130
+   }
+  },
+  {
+   "id": "logs.FilterLogEvents",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 517
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1312
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 368,
+    "id": "logs.FilterLogEvents"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 371
+   }
+  },
+  {
+   "id": "cloudfront.ListDistributions",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 250
+   },
+   "twin": {
+    "status": "twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1224
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 206,
+    "id": "cloudfront.ListDistributions"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 10737
+   }
+  },
+  {
+   "id": "ec2.DescribeInstances",
+   "code": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 748
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 1690
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 530,
+    "id": "ec2.DescribeInstances"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 5248
+   }
+  },
+  {
+   "id": "ec2.DescribeRegions",
+   "code": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 735
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 1667
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 248,
+    "id": "ec2.DescribeRegions"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "AuthFailure",
+    "ms": 184
+   }
+  },
+  {
+   "id": "ce.GetCostAndUsage",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 210
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 865
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 326,
+    "id": "ce.GetCostAndUsage"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 7223
+   }
+  },
+  {
+   "id": "cloudformation.DescribeStacks",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 766
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1543
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 546,
+    "id": "cloudformation.DescribeStacks"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 6666
+   }
+  },
+  {
+   "id": "dynamodb.ListTables",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 679
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1348
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 514,
+    "id": "dynamodb.ListTables"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 4215
+   }
+  },
+  {
+   "id": "sqs.ListQueues",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 722
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1387
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 510,
+    "id": "sqs.ListQueues"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 3993
+   }
+  },
+  {
+   "id": "sns.ListTopics",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 533
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1413
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 562,
+    "id": "sns.ListTopics"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 3856
+   }
+  },
+  {
+   "id": "kms.ListKeys",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 495
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1365
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 590,
+    "id": "kms.ListKeys"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 5347
+   }
+  },
+  {
+   "id": "secretsmanager.ListSecrets",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 656
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1254
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 470,
+    "id": "secretsmanager.ListSecrets"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1387
+   }
+  },
+  {
+   "id": "ssm.DescribeParameters",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 510
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1217
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 454,
+    "id": "ssm.DescribeParameters"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 3976
+   }
+  },
+  {
+   "id": "ecr.DescribeRepositories",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 875
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1400
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 569,
+    "id": "ecr.DescribeRepositories"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 4893
+   }
+  },
+  {
+   "id": "ecs.ListClusters",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 536
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1366
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 730,
+    "id": "ecs.ListClusters"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 5507
+   }
+  },
+  {
+   "id": "route53.ListHostedZones",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 323
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1281
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 268,
+    "id": "route53.ListHostedZones"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 10859
+   }
+  },
+  {
+   "id": "apigateway.GetRestApis",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 679
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1367
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 689,
+    "id": "apigateway.GetRestApis"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 11763
+   }
+  },
+  {
+   "id": "cloudwatch.ListMetrics",
+   "code": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 740
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "InvalidClientTokenId",
+    "ms": 1419
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 546,
+    "id": "cloudwatch.ListMetrics"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 8389
+   }
+  },
+  {
+   "id": "sso-admin.ListInstances",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 762
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1396
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 497,
+    "id": "sso-admin.ListInstances"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 7049
+   }
+  },
+  {
+   "id": "identitystore.ListUsers",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 791
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 1407
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 616,
+    "id": "identitystore.ListUsers"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 5713
+   }
+  },
+  {
+   "id": "organizations.ListAccounts",
+   "code": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 377
+   },
+   "twin": {
+    "status": "not twinned"
+   },
+   "cli": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 981
+   },
+   "pyodide": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 264,
+    "id": "organizations.ListAccounts"
+   },
+   "jssdk": {
+    "status": "reached",
+    "code": "UnrecognizedClientException",
+    "ms": 6597
+   }
+  }
+ ]
+}

@@ -7,7 +7,7 @@
 > defined on twins.sgit.ai. This site holds a proof of concept that runs in the browser
 > with localStorage as the vault.
 
-Site version: v0.4.1 (23 October 2026). Deployed to GitHub Pages from `dev` by
+Site version: v0.4.2 (23 October 2026). Deployed to GitHub Pages from `dev` by
 .github/workflows/deploy-pages.yml; every release is tagged vX.Y.Z by CI. Every page has a .md
 twin beside it (swap .html for .md). Briefs, in full: /briefs/index.html. What exists:
 /REALITY.md. Where the briefs were wrong, and departures from sgit.ai's repository guidance:
@@ -28,6 +28,16 @@ ListBuckets; read-only unless writes are allowed. Tested against a stand-in for 
 the relay and against real AWS with invented keys; browsing a real account's buckets has NOT
 been done yet. Step by step: /how-it-works/index.html. Least-privilege permission sets and
 the IAM Identity Center CLI: /iam/index.html (commands checked by the AWS CLI in CI).
+
+SINCE v0.4.2, THE CONSOLE (/console/): a page per service (Overview, S3, Lambda, All resources,
+Calls, Twin data), twin or live switched top left, and a request pane with every call and request.
+Live, S3 buckets are listed through the Cloud Control API (S3's ListBuckets never answers a browser;
+Cloud Control returns every region's buckets). /console/calls.html: 34 AWS operations measured with
+invented keys from the AWS CLI, boto3, boto3 under Pyodide, the AWS SDK for JavaScript and the twin;
+in a browser only s3.ListBuckets and S3 bucket calls without a CORS rule are blocked, for both
+libraries; data in /assets/console/call-matrix.json. A call editor sends any boto3 operation. The
+console has not yet been used against a real account beyond those probes. The twin in an sgit vault
+is planned at /console/plan.html#vault, not built.
 
 SINCE v0.4.1, UPTIME CHECKS, TWIN FIRST (/uptime/, plan at /uptime/plan.html). A Node.js 22 Lambda
 function (aws_twin/apps/uptime/handler/index.mjs, no dependencies) checks websites and appends each
@@ -113,8 +123,8 @@ hook plus S3's REST-XML protocol (21 named operations, bucket configurations and
 tagging) and STS GetCallerIdentity, answered from a Python mirror of sg-vfs's provider
 contract (SGraph-AI__Tools). Routes per service: twin, live, replay; every request recorded;
 unimplemented services answer 501 NotImplemented by name. `with Twin():` in-process, or
-`python -m aws_twin --port 4566` with AWS_ENDPOINT_URL. The same 36 tests: pytest 34 pass, 2
-opt-in live; Pyodide in headless Chromium 28 pass, 8 skipped (sockets, site files, opt-in). OSBot-AWS 2.39.10 runs against
+`python -m aws_twin --port 4566` with AWS_ENDPOINT_URL. The same 43 tests: pytest 41 pass, 2
+opt-in live; Pyodide in headless Chromium 35 pass, 8 skipped (sockets, site files, opt-in). OSBot-AWS 2.39.10 runs against
 it unchanged in both. /s3/ is an S3 browser whose every button calls OSBot-AWS in Pyodide,
 persisted to IndexedDB through vendored sg-vfs. /sessions/ checks a pasted IAM Identity
 Center session against AWS STS from the browser (with invented keys, and since v0.4.0 with
@@ -147,10 +157,11 @@ data: /articles/articles.json. Markdown twin beside every article: /articles/<sl
 ## Page map
 
 /                      the front page: in short, the flow, the build state, why a twin
-/s3/                   the S3 browser: Python (OSBot-AWS, boto3) behind every button, the Python twin answering
 /sessions/             AWS sessions: IAM Identity Center setup, paste, live check, better methods measured
 /iam/                  least privilege: S3 permission sets (policies under /iam/policies/), the CLI, the simulator, CORS
 /how-it-works/         a live session step by step: the hook, the routes, CORS, the relay, the guard, with diagrams
+/console/              the console: index (overview), s3, lambda, resources, calls (what works where, call editor), twin (twin data), plan
+/s3/                   redirects to /console/s3.html
 /uptime/               uptime checks in every region: deploy, run, read and decrypt, twin or account; /uptime/plan.html
 /python/               the Python twin; /python/tests.html runs its tests in the browser
 /twin/                 the JavaScript proof of concept (backend drop-down: vault, memory, live)
